@@ -1,0 +1,286 @@
+#include <cudnn.h>
+#include <stdio.h>
+#include <cuda.h>
+#include <malloc.h>
+#include <cstdlib>
+#include <time.h>
+#include <iostream>
+#include <sys/types.h>
+#include <errno.h>
+#include <vector>
+#include <fstream>
+#include <string>
+#include <omp.h>
+#define TH place holder
+#define TW place holder
+#define TC place holder
+#define C place holder
+#define N place holder
+#define H place holder
+#define W place holder
+
+#define TCS ((C-1)/TC + 1)
+#define THS ((H-1)/TH + 1)
+#define TWS ((W-1)/TW+1)
+#define R 3
+#define S 3
+
+
+using namespace std;
+#define checkCUDNN(expression)                               \
+  {                                                          \
+    cudnnStatus_t status = (expression);                     \
+    if (status != CUDNN_STATUS_SUCCESS) {                    \
+      std::cerr << "Error on line " << __LINE__ << ": "      \
+                << cudnnGetErrorString(status) << std::endl; \
+      std::exit(EXIT_FAILURE);                               \
+    }                                                        \
+  }
+inline void chkerr(cudaError_t code)
+{
+    if (code != cudaSuccess)
+    {
+        std::cerr << "ERROR!!!:" << cudaGetErrorString(code) <<endl;
+        exit(-1);
+    }
+}
+class Conv{
+public:
+    float *cpuKernel;
+    float alpha = 1.0f;
+    float beta = 0.0f;
+    cudnnHandle_t convCudnn;
+    void* d_workspace{nullptr};
+    size_t workspace_bytes{0};
+    cudnnTensorDescriptor_t convInputDescriptor;
+    cudnnTensorDescriptor_t convOutputDescriptor;
+    cudnnFilterDescriptor_t convKernelDescriptor;
+    cudnnConvolutionDescriptor_t convDesc;
+    float *output;
+    float *kernel;
+    void initialize();
+    float *forward(float *input);
+};
+void Conv::initialize(){
+
+    cudaMalloc(&kernel,sizeof(float)*C*N*9);
+    cudaMalloc(&this->output,sizeof(float)*N*H*W);
+    cudnnCreate(&convCudnn);
+    cudnnCreateTensorDescriptor(&convInputDescriptor);
+    cudnnSetTensor4dDescriptor(convInputDescriptor,
+            /*format=*/CUDNN_TENSOR_NCHW,
+            /*dataType=*/CUDNN_DATA_FLOAT,
+            /*batch_size=*/1,
+            /*channels=*/C,
+            /*image_height=*/H,
+            /*image_width=*/W);
+    cudnnCreateFilterDescriptor(&convKernelDescriptor);
+    cudnnSetFilter4dDescriptor(convKernelDescriptor,
+            /*dataType=*/CUDNN_DATA_FLOAT,
+            /*format=*/CUDNN_TENSOR_NCHW,
+            /*out_channels=*/N,
+            /*in_channels=*/C,
+            /*kernel_height=*/R,
+            /*kernel_width=*/S);
+    cudnnCreateConvolutionDescriptor(&convDesc);
+    cudnnSetConvolution2dDescriptor(convDesc,
+            /*pad_height=*/1,
+            /*pad_width=*/1,
+            /*vertical_stride=*/1,
+            /*horizontal_stride=*/1,
+            /*dilation_height=*/1,
+            /*dilation_width=*/1,
+            /*mode=*/CUDNN_CROSS_CORRELATION,
+                                    CUDNN_DATA_FLOAT);
+    int batch_size{0}, channels{0}, height{0}, width{0};
+    cudnnGetConvolution2dForwardOutputDim(convDesc,
+                                          convInputDescriptor,
+                                          convKernelDescriptor,
+                                          &batch_size,
+                                          &channels,
+                                          &height,
+                                          &width);
+    cudnnCreateTensorDescriptor(&convOutputDescriptor);
+    cudnnSetTensor4dDescriptor(convOutputDescriptor,
+            /*format=*/CUDNN_TENSOR_NCHW,
+            /*dataType=*/CUDNN_DATA_FLOAT,
+            /*batch_size=*/1,
+            /*channels=*/N,
+            /*image_height=*/H,
+            /*image_width=*/W);
+    cudnnGetConvolutionForwardWorkspaceSize(convCudnn,
+                                            convInputDescriptor,
+                                            convKernelDescriptor,
+                                            convDesc,
+                                            convOutputDescriptor,
+                                            CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM,
+                                            &workspace_bytes);
+    cudaMalloc(&d_workspace, workspace_bytes);
+    unsigned int kernelSize = R*S*C*N;//kernel
+    this->cpuKernel = (float *)malloc(kernelSize*sizeof(float));
+    for(int i=0;i<kernelSize;++i){
+        this->cpuKernel[i] = 1.0f;
+    }
+    cudaMemcpy(kernel,cpuKernel,R*S*C*N*sizeof(float),cudaMemcpyHostToDevice);
+    free(cpuKernel);
+}
+float * Conv::forward(float *input) {
+    cudaMemset(output, 0, 1*N*H*W*sizeof(float));
+    checkCUDNN(cudnnConvolutionForward(convCudnn,
+                                       &alpha,
+                                       convInputDescriptor,
+                                       input,
+                                       convKernelDescriptor,
+                                       kernel,
+                                       convDesc,
+                                       CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM,
+                                       d_workspace,
+                                       workspace_bytes,
+                                       &beta,
+                                       convOutputDescriptor,
+                                       output));
+    return output;
+}
+__device__ void load_data_2_register(float *__restrict__ data_array, unsigned int c_index, const float * __restrict__ kernel, unsigned int n_id){
+    for(unsigned int r=0;r<R;++r){
+        for(unsigned int s=0;s<S;++s){
+            data_array[r*S+s] = kernel[c_index*N*9+r*3*N+s*N+n_id];
+        }
+    }
+}
+switch_function_place_holder
+__global__ void transform(float *matrix, float *matrix2){
+    for(unsigned int global_id = blockIdx.x * blockDim.x + threadIdx.x;global_id<C*H*W;global_id+=gridDim.x * blockDim.x){
+        const float v = matrix[global_id];
+        unsigned int c = global_id / (H*W);
+        unsigned int hw = global_id % (H*W);
+        int h = (hw)/W+1;
+        int w = (hw)%W+1;
+        int th_start = min(h/TH,THS-1);
+        int tw_start = min(w/TW,TWS-1);
+        for(int tile_h_id = th_start;tile_h_id>=0;tile_h_id--){
+            if((tile_h_id*TH+TH+2)<=h){
+                break;
+            }
+            for(int tile_w_id = tw_start;tile_w_id>=0;tile_w_id--){
+                if((tile_w_id*TW+TW+2)<=w){
+                    break;
+                }
+                unsigned int tile_id = tile_h_id * TWS + tile_w_id;
+                unsigned int abs_h = h - tile_h_id*TH;
+                unsigned int abs_w = w - tile_w_id*TW;
+                matrix2[c*THS*TWS*(TH+2)*(TW+2)+tile_id*(TH+2)*(TW+2)+abs_h*(TW+2)+abs_w] = v;
+            }
+        }
+    }
+
+}
+__device__ void load_input_2_shared_memory(float *values,float *shared_input,unsigned int warp_id,unsigned int lane_id,
+                                           unsigned int tile_id,unsigned int tile_c_id){
+    for(unsigned int c_id=warp_id;c_id<TC&&tile_c_id+c_id<C;c_id+=blockDim.x/32){
+        for(unsigned int id = lane_id;id<(TH+2)*(TW+2);id+=32){
+            shared_input[c_id*(TH+2)*(TW+2)+id] = values[(tile_c_id+c_id)*(THS*TWS)*(TH+2)*(TW+2)+tile_id*(TH+2)*(TW+2)+id];
+        }
+    }
+}
+__global__ void conv2d(float * __restrict__ values,const float * __restrict__ kernel, float * __restrict__ outputs){
+    __shared__ float input[TC*(TH+2)*(TW+2)];
+    const unsigned int tile_id = blockIdx.x;
+    const unsigned int tc_id = tile_id / (THS * TWS);
+    const unsigned int th_id = (tile_id - tc_id * (THS*TWS))/TWS;
+    const unsigned int tw_id = (tile_id - tc_id * (THS*TWS))%TWS;
+    const unsigned int h_start = th_id * TH;
+    const unsigned int w_start = tw_id * TW;
+    const unsigned int warp_id = threadIdx.x / 32;
+    const unsigned int lane_id = threadIdx.x % 32;
+    float data_array[9];
+    float temp_result[TH*TW] = {0.0f};
+    load_input_2_shared_memory(values,input,warp_id,lane_id,tile_id - tc_id * (THS*TWS),tc_id*TC);
+    __syncthreads();
+    float v;
+    unsigned int n = threadIdx.x;
+    unsigned int c_offset = tc_id * TC;
+#pragma unroll
+    for(unsigned int c=0;c<TC;c++){
+        load_data_2_register(data_array,c + c_offset,kernel,n);
+#pragma unroll
+        for(unsigned int i=0;i<(TH+2)*(TW+2);++i){
+            v = input[i + c*(TH+2)*(TW+2)];
+            switch_function(i,data_array,v,temp_result);
+        }
+    }
+#pragma unroll
+    for (unsigned int th = 0; th < TH; ++th) {
+#pragma unroll
+        for (unsigned int tw = 0; tw < TW; ++tw) {
+            if (h_start + th >= H || w_start + tw >= W) {
+                continue;
+            }
+            atomicAdd(&outputs[n*H*W+(h_start + th) * W+(w_start + tw)],temp_result[(th * TW + tw)]);
+        }
+    }
+}
+float check_diff(float *x, float *y, unsigned int size){
+    float diff = 0.0f;
+    #pragma omp parallel for reduction(+ : diff)
+    for(unsigned int i=0;i<size;++i){
+        diff += abs(x[i] - y[i]);
+    }
+    return diff;
+}
+int main(void){
+    float *input = new float[C*H*W];
+    time_t t;
+    srand((unsigned) time(&t));
+    for(int i =0;i<C*H*W;++i){
+        input[i] = rand() % 10;
+    }
+    float *device_input;
+    cudaMalloc(&device_input,C*H*W*sizeof(float));
+    cudaMemcpy(device_input,input,C*H*W*sizeof(float),cudaMemcpyHostToDevice);
+    float *K = new float[C*N*9];
+    for(int i=0;i<C*N*9;++i){
+        K[i] = 1.0f;
+    }
+    Conv conv;
+    conv.initialize();
+    float *out_cudnn;
+    float *out_cudnn_host = new float[N*H*W];
+    cudaEvent_t event_start;
+    cudaEvent_t event_stop;
+    cudaEventCreate(&event_start);
+    cudaEventCreate(&event_stop);
+    out_cudnn = conv.forward(device_input);
+    cudaMemcpy(out_cudnn_host,out_cudnn,N*H*W*sizeof(float),cudaMemcpyDeviceToHost);
+
+    float *device_K;
+    float *device_out;
+    cudaMalloc(&device_out,H*W*N*sizeof(float));
+    cudaMemset(device_out,0,H*W*N*sizeof(float));
+    cudaMalloc(&device_K,C*N*9*sizeof(float));
+    cudaMemcpy(device_K,K,C*N*9*sizeof(float),cudaMemcpyHostToDevice);
+    float *matrix;
+    cudaMalloc(&matrix,C*(TH+2)*(TW+2)*THS*TWS*sizeof(float));
+    cudaMemset(matrix,0,C*(TH+2)*(TW+2)*THS*TWS*sizeof(float));
+    unsigned int blkDim = ((N - 1)/32 + 1) * 32;
+    cudaEventRecord(event_start);
+    transform<<<216,1024>>>(device_input,matrix);
+    conv2d<<<TCS*THS*TWS,blkDim>>>(matrix,device_K, device_out);
+    cudaEventRecord(event_stop);
+    cudaEventSynchronize(event_stop);
+    float time_tdc;
+    cudaEventElapsedTime(&time_tdc, event_start, event_stop);
+    float *out_tdc = new float[N*H*W];
+    cudaMemcpy(out_tdc,device_out,N*H*W*sizeof(float),cudaMemcpyDeviceToHost);
+
+    float difference = check_diff(out_cudnn_host, out_tdc, N*H*W);
+    cout<<"diff is "<<difference<<endl;
+    ofstream outfile;
+    char buffer[1000];
+    int ret = sprintf(buffer,"%d,%d,%d,%f,%f\n",TH,TW,TC,difference, time_tdc);
+    outfile.open("tmp.csv", std::ios_base::app);
+    outfile << buffer;
+    return 0;
+}
+
+
