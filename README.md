@@ -49,7 +49,7 @@ Note that `test_images` is the path to the folder where the images used for the 
 
 You will observe the following result. 
 
-![eval1](https://github.com/black-cat-sheriff/TDC-PPOPP/blob/main/images/model-eval.png)
+![eval1](https://github.com/black-cat-sheriff/TDC-PPOPP/blob/master/images/model-eval.png)
 
 ## 2.2 Peformance Evaluation of TDC-generated Core Convolution Layers on 2080Ti
 
