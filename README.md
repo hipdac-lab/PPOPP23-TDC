@@ -42,6 +42,7 @@ cd inference
 python main.py --model tkc_resnet18 --data-path test_images/
 python main.py --model tkc_resnet50 --data-path test_images/
 python main.py --model tkc_densenet121 --data-path test_images/
+python main.py --model tkc_densenet201 --data-path test_images/
 python main.py --model tkc_vgg16 --data-path test_images/
 ```
 
