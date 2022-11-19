@@ -65,7 +65,7 @@ In our paper, we claim that our oracle kernel has about 4X speedup compared with
 
 You will get the first table like below, including convolution shapes, convolution schemes, runtimes, and TDC speedups.
 
-![eval2](https://github.com/black-cat-sheriff/TDC-PPOPP/blob/main/images/oracle.png)
+![eval2](https://github.com/black-cat-sheriff/TDC-PPOPP/blob/master/images/oracle.png)
  
 ### 2.2.2 Comparison among TDC modeling kernel, cuDNN, and TVM. 
 
@@ -73,7 +73,7 @@ In our paper, we claim that the TDC modeling kernel is around 25% slower than TD
 
 You will get the second table like below, including convolution shapes, convolution schemes, runtimes, and TDC speedups.
 
-![eval3](https://github.com/black-cat-sheriff/TDC-PPOPP/blob/main/images/modeling.png)
+![eval3](https://github.com/black-cat-sheriff/TDC-PPOPP/blob/master/images/modeling.png)
 
 ### 2.2.3 End-to-end performance comparison among pure cuDNN on original models, pure cuDNN on TK compressed models, and TK compressed models.
 
@@ -81,7 +81,7 @@ In our paper, we claim that (1) TDC oralce and modeling end2end achieve 1.57X/1.
 
 You will get the third table like below, each model has two rows - the first one is header and the second one is runtime.
 
-![eval3](https://github.com/black-cat-sheriff/TDC-PPOPP/blob/main/images/end2end.png)
+![eval3](https://github.com/black-cat-sheriff/TDC-PPOPP/blob/master/images/end2end.png)
    
 ## 2.3 Performance Evaluation of TDC-generated Core Convolution Layers on A100
 
@@ -97,7 +97,7 @@ In our paper, we claim that our oracle kernel has about 4X speedup compared with
 
 You will observe the first table like below, including convolution shapes, convolution schemes, runtimes, and TDC speedups.
 
-![eval2](https://github.com/black-cat-sheriff/TDC-PPOPP/blob/main/images/oracle.png)
+![eval2](https://github.com/black-cat-sheriff/TDC-PPOPP/blob/master/images/oracle.png)
  
 ### 2.3.2 Comparison among TDC modeling kernel, cuDNN, and TVM. 
 
@@ -105,7 +105,7 @@ In our paper, we claim that the TDC modeling kernel is around 25% slower than TD
 
 You will get the second table like below, including convolution shapes, convolution schemes, runtimes, and TDC speedups.
 
-![eval3](https://github.com/black-cat-sheriff/TDC-PPOPP/blob/main/images/modeling.png)
+![eval3](https://github.com/black-cat-sheriff/TDC-PPOPP/blob/master/images/modeling.png)
   
 ### 2.3.3 End-to-end performance comparison among pure cuDNN on original models, pure cuDNN on TK compressed models, and TK compressed models.
 
@@ -113,7 +113,7 @@ In our paper, we claim that (1) TDC oralce and modeling end2end achieve 1.85X/1.
    
 You will get the third table like below, each model has two rows - the first one is header and the second one is runtime.
 
-![eval3](https://github.com/black-cat-sheriff/TDC-PPOPP/blob/main/images/end2end.png)
+![eval3](https://github.com/black-cat-sheriff/TDC-PPOPP/blob/master/images/end2end.png)
 
 ## Used Platforms and Dataset
 
