@@ -12,8 +12,8 @@
 #include <string>
 #include <omp.h>
 #define TH 2
-#define TW 5
-#define TC 16
+#define TW 6
+#define TC 32
 #define C 160
 #define N 96
 #define H 28
@@ -22,6 +22,7 @@
 #define TCS ((C-1)/TC + 1)
 #define THS ((H-1)/TH + 1)
 #define TWS ((W-1)/TW+1)
+#define WPAD (TWS*TW + 2)
 #define R 3
 #define S 3
 
@@ -871,368 +872,297 @@ float * ConvFFT::forward(float *input) {
                                        output));
     return output;
 }
-__device__ void load_data_2_register(float *__restrict__ data_array, unsigned int c_index, const float * __restrict__ kernel, unsigned int n_id){
-    for(unsigned int r=0;r<R;++r){
-        for(unsigned int s=0;s<S;++s){
-            data_array[r*S+s] = kernel[c_index*N*9+r*3*N+s*N+n_id];
-        }
+__device__ void load_input_2_shared_memory(float *input, float *shared_input, unsigned int h_start,
+                                           unsigned int h_end, unsigned int h_offset, unsigned int c_start,
+                                           unsigned int warp_id, unsigned int lane_id, unsigned int warp_size){
+    switch(h_offset){
+        case 0:
+            for(unsigned int c = warp_id; c<TC; c+=TWS){
+                for(unsigned int i=lane_id; i<(h_end - h_start) * W; i+=warp_size){
+                    unsigned int r = i/W;
+                    unsigned int s = i%W;
+                    shared_input[c*(TH + 2)*(WPAD) + r * WPAD + s + 1] = input[(c_start + c) * H * W + h_start * W + i];
+                }
+            }
+            break;
+        case 1:
+            for(unsigned int c = warp_id; c<TC; c+=TWS){
+                for(unsigned int i=lane_id; i<(h_end - h_start) * W; i+=warp_size){
+                    unsigned int r = i/W;
+                    unsigned int s = i%W;
+                    shared_input[c*(TH + 2)*(WPAD) + (1 + r) * WPAD + s + 1] = input[(c_start + c) * H * W + h_start * W + i];
+                }
+            }
+            break;
     }
 }
-__device__ void switch_function( unsigned int switch_condition,float *temp_kernel,float v,float *temp_result){
-	switch (switch_condition) {
-		case 0:
-			#pragma unroll
-			for ( int r = 0; r < 1; r++) {
+__device__ __forceinline__ void switch_write_back(unsigned int write_h, unsigned int write_w, unsigned int h_out_start, unsigned int w_out_start, unsigned int n, float * outputs, float * temp_result){
+	switch(write_h){
+		case 1: 
+ 		switch(write_w){
+			case 1:
+ 			#pragma unroll
+			for (unsigned int th = 0; th < 1; ++th) { 
 				#pragma unroll
-				for ( int s = 0; s < 1; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(0-r)*5+(0-s)] += result;
+				for (unsigned int tw = 0; tw < 1; ++tw) { 
+					atomicAdd(&outputs[n*H*W+(h_out_start + th) * W+(w_out_start + tw)],temp_result[(th * TW + tw)]);
 				}
 			}
-		break;
-		case 1:
-			#pragma unroll
-			for ( int r = 0; r < 1; r++) {
+			break;
+			case 2:
+ 			#pragma unroll
+			for (unsigned int th = 0; th < 1; ++th) { 
 				#pragma unroll
-				for ( int s = 0; s < 2; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(0-r)*5+(1-s)] += result;
+				for (unsigned int tw = 0; tw < 2; ++tw) { 
+					atomicAdd(&outputs[n*H*W+(h_out_start + th) * W+(w_out_start + tw)],temp_result[(th * TW + tw)]);
 				}
 			}
-		break;
-		case 2:
-			#pragma unroll
-			for ( int r = 0; r < 1; r++) {
+			break;
+			case 3:
+ 			#pragma unroll
+			for (unsigned int th = 0; th < 1; ++th) { 
 				#pragma unroll
-				for ( int s = 0; s < 3; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(0-r)*5+(2-s)] += result;
+				for (unsigned int tw = 0; tw < 3; ++tw) { 
+					atomicAdd(&outputs[n*H*W+(h_out_start + th) * W+(w_out_start + tw)],temp_result[(th * TW + tw)]);
 				}
 			}
-		break;
-		case 3:
-			#pragma unroll
-			for ( int r = 0; r < 1; r++) {
+			break;
+			case 4:
+ 			#pragma unroll
+			for (unsigned int th = 0; th < 1; ++th) { 
 				#pragma unroll
-				for ( int s = 0; s < 3; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(0-r)*5+(3-s)] += result;
+				for (unsigned int tw = 0; tw < 4; ++tw) { 
+					atomicAdd(&outputs[n*H*W+(h_out_start + th) * W+(w_out_start + tw)],temp_result[(th * TW + tw)]);
 				}
 			}
-		break;
-		case 4:
-			#pragma unroll
-			for ( int r = 0; r < 1; r++) {
+			break;
+			case 5:
+ 			#pragma unroll
+			for (unsigned int th = 0; th < 1; ++th) { 
 				#pragma unroll
-				for ( int s = 0; s < 3; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(0-r)*5+(4-s)] += result;
+				for (unsigned int tw = 0; tw < 5; ++tw) { 
+					atomicAdd(&outputs[n*H*W+(h_out_start + th) * W+(w_out_start + tw)],temp_result[(th * TW + tw)]);
 				}
 			}
-		break;
-		case 5:
-			#pragma unroll
-			for ( int r = 0; r < 1; r++) {
+			break;
+			case 6:
+ 			#pragma unroll
+			for (unsigned int th = 0; th < 1; ++th) { 
 				#pragma unroll
-				for ( int s = 1; s < 3; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(0-r)*5+(5-s)] += result;
+				for (unsigned int tw = 0; tw < 6; ++tw) { 
+					atomicAdd(&outputs[n*H*W+(h_out_start + th) * W+(w_out_start + tw)],temp_result[(th * TW + tw)]);
 				}
 			}
+			break;
+		} 
 		break;
-		case 6:
-			#pragma unroll
-			for ( int r = 0; r < 1; r++) {
+		case 2: 
+ 		switch(write_w){
+			case 1:
+ 			#pragma unroll
+			for (unsigned int th = 0; th < 2; ++th) { 
 				#pragma unroll
-				for ( int s = 2; s < 3; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(0-r)*5+(6-s)] += result;
+				for (unsigned int tw = 0; tw < 1; ++tw) { 
+					atomicAdd(&outputs[n*H*W+(h_out_start + th) * W+(w_out_start + tw)],temp_result[(th * TW + tw)]);
 				}
 			}
-		break;
-		case 7:
-			#pragma unroll
-			for ( int r = 0; r < 2; r++) {
+			break;
+			case 2:
+ 			#pragma unroll
+			for (unsigned int th = 0; th < 2; ++th) { 
 				#pragma unroll
-				for ( int s = 0; s < 1; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(1-r)*5+(0-s)] += result;
+				for (unsigned int tw = 0; tw < 2; ++tw) { 
+					atomicAdd(&outputs[n*H*W+(h_out_start + th) * W+(w_out_start + tw)],temp_result[(th * TW + tw)]);
 				}
 			}
-		break;
-		case 8:
-			#pragma unroll
-			for ( int r = 0; r < 2; r++) {
+			break;
+			case 3:
+ 			#pragma unroll
+			for (unsigned int th = 0; th < 2; ++th) { 
 				#pragma unroll
-				for ( int s = 0; s < 2; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(1-r)*5+(1-s)] += result;
+				for (unsigned int tw = 0; tw < 3; ++tw) { 
+					atomicAdd(&outputs[n*H*W+(h_out_start + th) * W+(w_out_start + tw)],temp_result[(th * TW + tw)]);
 				}
 			}
-		break;
-		case 9:
-			#pragma unroll
-			for ( int r = 0; r < 2; r++) {
+			break;
+			case 4:
+ 			#pragma unroll
+			for (unsigned int th = 0; th < 2; ++th) { 
 				#pragma unroll
-				for ( int s = 0; s < 3; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(1-r)*5+(2-s)] += result;
+				for (unsigned int tw = 0; tw < 4; ++tw) { 
+					atomicAdd(&outputs[n*H*W+(h_out_start + th) * W+(w_out_start + tw)],temp_result[(th * TW + tw)]);
 				}
 			}
-		break;
-		case 10:
-			#pragma unroll
-			for ( int r = 0; r < 2; r++) {
+			break;
+			case 5:
+ 			#pragma unroll
+			for (unsigned int th = 0; th < 2; ++th) { 
 				#pragma unroll
-				for ( int s = 0; s < 3; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(1-r)*5+(3-s)] += result;
+				for (unsigned int tw = 0; tw < 5; ++tw) { 
+					atomicAdd(&outputs[n*H*W+(h_out_start + th) * W+(w_out_start + tw)],temp_result[(th * TW + tw)]);
 				}
 			}
-		break;
-		case 11:
-			#pragma unroll
-			for ( int r = 0; r < 2; r++) {
+			break;
+			case 6:
+ 			#pragma unroll
+			for (unsigned int th = 0; th < 2; ++th) { 
 				#pragma unroll
-				for ( int s = 0; s < 3; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(1-r)*5+(4-s)] += result;
+				for (unsigned int tw = 0; tw < 6; ++tw) { 
+					atomicAdd(&outputs[n*H*W+(h_out_start + th) * W+(w_out_start + tw)],temp_result[(th * TW + tw)]);
 				}
 			}
+			break;
+		} 
 		break;
-		case 12:
-			#pragma unroll
-			for ( int r = 0; r < 2; r++) {
-				#pragma unroll
-				for ( int s = 1; s < 3; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(1-r)*5+(5-s)] += result;
-				}
-			}
-		break;
-		case 13:
-			#pragma unroll
-			for ( int r = 0; r < 2; r++) {
-				#pragma unroll
-				for ( int s = 2; s < 3; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(1-r)*5+(6-s)] += result;
-				}
-			}
-		break;
-		case 14:
-			#pragma unroll
-			for ( int r = 1; r < 3; r++) {
-				#pragma unroll
-				for ( int s = 0; s < 1; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(2-r)*5+(0-s)] += result;
-				}
-			}
-		break;
-		case 15:
-			#pragma unroll
-			for ( int r = 1; r < 3; r++) {
-				#pragma unroll
-				for ( int s = 0; s < 2; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(2-r)*5+(1-s)] += result;
-				}
-			}
-		break;
-		case 16:
-			#pragma unroll
-			for ( int r = 1; r < 3; r++) {
-				#pragma unroll
-				for ( int s = 0; s < 3; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(2-r)*5+(2-s)] += result;
-				}
-			}
-		break;
-		case 17:
-			#pragma unroll
-			for ( int r = 1; r < 3; r++) {
-				#pragma unroll
-				for ( int s = 0; s < 3; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(2-r)*5+(3-s)] += result;
-				}
-			}
-		break;
-		case 18:
-			#pragma unroll
-			for ( int r = 1; r < 3; r++) {
-				#pragma unroll
-				for ( int s = 0; s < 3; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(2-r)*5+(4-s)] += result;
-				}
-			}
-		break;
-		case 19:
-			#pragma unroll
-			for ( int r = 1; r < 3; r++) {
-				#pragma unroll
-				for ( int s = 1; s < 3; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(2-r)*5+(5-s)] += result;
-				}
-			}
-		break;
-		case 20:
-			#pragma unroll
-			for ( int r = 1; r < 3; r++) {
-				#pragma unroll
-				for ( int s = 2; s < 3; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(2-r)*5+(6-s)] += result;
-				}
-			}
-		break;
-		case 21:
-			#pragma unroll
-			for ( int r = 2; r < 3; r++) {
-				#pragma unroll
-				for ( int s = 0; s < 1; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(3-r)*5+(0-s)] += result;
-				}
-			}
-		break;
-		case 22:
-			#pragma unroll
-			for ( int r = 2; r < 3; r++) {
-				#pragma unroll
-				for ( int s = 0; s < 2; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(3-r)*5+(1-s)] += result;
-				}
-			}
-		break;
-		case 23:
-			#pragma unroll
-			for ( int r = 2; r < 3; r++) {
-				#pragma unroll
-				for ( int s = 0; s < 3; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(3-r)*5+(2-s)] += result;
-				}
-			}
-		break;
-		case 24:
-			#pragma unroll
-			for ( int r = 2; r < 3; r++) {
-				#pragma unroll
-				for ( int s = 0; s < 3; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(3-r)*5+(3-s)] += result;
-				}
-			}
-		break;
-		case 25:
-			#pragma unroll
-			for ( int r = 2; r < 3; r++) {
-				#pragma unroll
-				for ( int s = 0; s < 3; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(3-r)*5+(4-s)] += result;
-				}
-			}
-		break;
-		case 26:
-			#pragma unroll
-			for ( int r = 2; r < 3; r++) {
-				#pragma unroll
-				for ( int s = 1; s < 3; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(3-r)*5+(5-s)] += result;
-				}
-			}
-		break;
-		case 27:
-			#pragma unroll
-			for ( int r = 2; r < 3; r++) {
-				#pragma unroll
-				for ( int s = 2; s < 3; s++) {
-					float result = v * temp_kernel[r*S+s];
-					temp_result[(3-r)*5+(6-s)] += result;
-				}
-			}
-		break;
-
 	}
 }
-__global__ void transform(float *matrix, float *matrix2){
-    for(unsigned int global_id = blockIdx.x * blockDim.x + threadIdx.x;global_id<C*H*W;global_id+=gridDim.x * blockDim.x){
-        const float v = matrix[global_id];
-        unsigned int c = global_id / (H*W);
-        unsigned int hw = global_id % (H*W);
-        int h = (hw)/W+1;
-        int w = (hw)%W+1;
-        int th_start = min(h/TH,THS-1);
-        int tw_start = min(w/TW,TWS-1);
-        for(int tile_h_id = th_start;tile_h_id>=0;tile_h_id--){
-            if((tile_h_id*TH+TH+2)<=h){
-                break;
-            }
-            for(int tile_w_id = tw_start;tile_w_id>=0;tile_w_id--){
-                if((tile_w_id*TW+TW+2)<=w){
-                    break;
-                }
-                unsigned int tile_id = tile_h_id * TWS + tile_w_id;
-                unsigned int abs_h = h - tile_h_id*TH;
-                unsigned int abs_w = w - tile_w_id*TW;
-                matrix2[c*THS*TWS*(TH+2)*(TW+2)+tile_id*(TH+2)*(TW+2)+abs_h*(TW+2)+abs_w] = v;
-            }
-        }
-    }
-}
-__device__ void load_input_2_shared_memory(float *values,float *shared_input,unsigned int warp_id,unsigned int lane_id,
-                                           unsigned int tile_id,unsigned int tile_c_id){
-    for(unsigned int c_id=warp_id;c_id<TC&&tile_c_id+c_id<C;c_id+=blockDim.x/32){
-        for(unsigned int id = lane_id;id<(TH+2)*(TW+2);id+=32){
-            shared_input[c_id*(TH+2)*(TW+2)+id] = values[(tile_c_id+c_id)*(THS*TWS)*(TH+2)*(TW+2)+tile_id*(TH+2)*(TW+2)+id];
-        }
-    }
-}
-__global__ void conv2d(float * __restrict__ values,const float * __restrict__ kernel, float * __restrict__ outputs){
-    __shared__ float input[TC*(TH+2)*(TW+2)];
+__global__ void conv2d(float * __restrict__ input,const float * __restrict__ kernel, float * __restrict__ outputs){
+    extern __shared__ float shared_input[];
     const unsigned int tile_id = blockIdx.x;
-    const unsigned int tc_id = tile_id / (THS * TWS);
-    const unsigned int th_id = (tile_id - tc_id * (THS*TWS))/TWS;
-    const unsigned int tw_id = (tile_id - tc_id * (THS*TWS))%TWS;
-    const unsigned int h_start = th_id * TH;
-    const unsigned int w_start = tw_id * TW;
-    const unsigned int warp_id = threadIdx.x / 32;
-    const unsigned int lane_id = threadIdx.x % 32;
+    const unsigned int tc_id = tile_id / THS;
+    const unsigned int th_id = tile_id % THS;
+    const unsigned int tw_id = threadIdx.x / N;
+    const int h_out_start = th_id * TH;
+    const int w_out_start = tw_id * TW;
+    const unsigned int warp_id = tw_id;
+    const unsigned int lane_id = threadIdx.x % N;
     float data_array[9];
     float temp_result[TH*TW] = {0.0f};
-    load_input_2_shared_memory(values,input,warp_id,lane_id,tile_id - tc_id * (THS*TWS),tc_id*TC);
-    __syncthreads();
-    float v;
-    unsigned int n = threadIdx.x;
+    for(unsigned int i=threadIdx.x;i<TC*(TH+2)*WPAD;i+=blockDim.x){
+        shared_input[i] = 0.0f;
+    }
+    unsigned int n = lane_id;
     unsigned int c_offset = tc_id * TC;
+    int h_offset = (h_out_start == 0)?1:0;
+    int h_padded_start = h_out_start;
+    int h_padded_end = min(h_padded_start + TH + 2, H + 2);
+    int h_non_padded_start = max(h_out_start - 1, 0);
+    int h_non_padded_end = min(H, h_padded_end - 1);
+    __syncthreads();
+    load_input_2_shared_memory(input, shared_input, h_non_padded_start, h_non_padded_end, h_offset, c_offset, warp_id, lane_id, N);
+    __syncthreads();
 #pragma unroll
     for(unsigned int c=0;c<TC;c++){
-        load_data_2_register(data_array,c + c_offset,kernel,n);
 #pragma unroll
-        for(unsigned int i=0;i<(TH+2)*(TW+2);++i){
-            v = input[i + c*(TH+2)*(TW+2)];
-            switch_function(i,data_array,v,temp_result);
-        }
-    }
+        for(unsigned int r=0;r<R;++r){
 #pragma unroll
-    for (unsigned int th = 0; th < TH; ++th) {
-#pragma unroll
-        for (unsigned int tw = 0; tw < TW; ++tw) {
-            if (h_start + th >= H || w_start + tw >= W) {
-                continue;
+            for(unsigned int s=0;s<S;++s){
+                data_array[r*S+s] = kernel[(c + c_offset)*N*9+r*3*N+s*N+n];
             }
-            atomicAdd(&outputs[n*H*W+(h_start + th) * W+(w_start + tw)],temp_result[(th * TW + tw)]);
         }
+        		temp_result[0] += shared_input[c*(TH+2)*(WPAD) + 0 * WPAD + tw_id * TW + 0]*data_array[0];
+		temp_result[1] += shared_input[c*(TH+2)*(WPAD) + 0 * WPAD + tw_id * TW + 1]*data_array[0];
+		temp_result[0] += shared_input[c*(TH+2)*(WPAD) + 0 * WPAD + tw_id * TW + 1]*data_array[1];
+		temp_result[2] += shared_input[c*(TH+2)*(WPAD) + 0 * WPAD + tw_id * TW + 2]*data_array[0];
+		temp_result[1] += shared_input[c*(TH+2)*(WPAD) + 0 * WPAD + tw_id * TW + 2]*data_array[1];
+		temp_result[0] += shared_input[c*(TH+2)*(WPAD) + 0 * WPAD + tw_id * TW + 2]*data_array[2];
+		temp_result[3] += shared_input[c*(TH+2)*(WPAD) + 0 * WPAD + tw_id * TW + 3]*data_array[0];
+		temp_result[2] += shared_input[c*(TH+2)*(WPAD) + 0 * WPAD + tw_id * TW + 3]*data_array[1];
+		temp_result[1] += shared_input[c*(TH+2)*(WPAD) + 0 * WPAD + tw_id * TW + 3]*data_array[2];
+		temp_result[4] += shared_input[c*(TH+2)*(WPAD) + 0 * WPAD + tw_id * TW + 4]*data_array[0];
+		temp_result[3] += shared_input[c*(TH+2)*(WPAD) + 0 * WPAD + tw_id * TW + 4]*data_array[1];
+		temp_result[2] += shared_input[c*(TH+2)*(WPAD) + 0 * WPAD + tw_id * TW + 4]*data_array[2];
+		temp_result[5] += shared_input[c*(TH+2)*(WPAD) + 0 * WPAD + tw_id * TW + 5]*data_array[0];
+		temp_result[4] += shared_input[c*(TH+2)*(WPAD) + 0 * WPAD + tw_id * TW + 5]*data_array[1];
+		temp_result[3] += shared_input[c*(TH+2)*(WPAD) + 0 * WPAD + tw_id * TW + 5]*data_array[2];
+		temp_result[5] += shared_input[c*(TH+2)*(WPAD) + 0 * WPAD + tw_id * TW + 6]*data_array[1];
+		temp_result[4] += shared_input[c*(TH+2)*(WPAD) + 0 * WPAD + tw_id * TW + 6]*data_array[2];
+		temp_result[5] += shared_input[c*(TH+2)*(WPAD) + 0 * WPAD + tw_id * TW + 7]*data_array[2];
+		temp_result[6] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 0]*data_array[0];
+		temp_result[0] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 0]*data_array[3];
+		temp_result[7] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 1]*data_array[0];
+		temp_result[6] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 1]*data_array[1];
+		temp_result[1] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 1]*data_array[3];
+		temp_result[0] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 1]*data_array[4];
+		temp_result[8] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 2]*data_array[0];
+		temp_result[7] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 2]*data_array[1];
+		temp_result[6] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 2]*data_array[2];
+		temp_result[2] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 2]*data_array[3];
+		temp_result[1] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 2]*data_array[4];
+		temp_result[0] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 2]*data_array[5];
+		temp_result[9] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 3]*data_array[0];
+		temp_result[8] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 3]*data_array[1];
+		temp_result[7] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 3]*data_array[2];
+		temp_result[3] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 3]*data_array[3];
+		temp_result[2] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 3]*data_array[4];
+		temp_result[1] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 3]*data_array[5];
+		temp_result[10] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 4]*data_array[0];
+		temp_result[9] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 4]*data_array[1];
+		temp_result[8] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 4]*data_array[2];
+		temp_result[4] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 4]*data_array[3];
+		temp_result[3] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 4]*data_array[4];
+		temp_result[2] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 4]*data_array[5];
+		temp_result[11] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 5]*data_array[0];
+		temp_result[10] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 5]*data_array[1];
+		temp_result[9] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 5]*data_array[2];
+		temp_result[5] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 5]*data_array[3];
+		temp_result[4] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 5]*data_array[4];
+		temp_result[3] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 5]*data_array[5];
+		temp_result[11] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 6]*data_array[1];
+		temp_result[10] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 6]*data_array[2];
+		temp_result[5] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 6]*data_array[4];
+		temp_result[4] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 6]*data_array[5];
+		temp_result[11] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 7]*data_array[2];
+		temp_result[5] += shared_input[c*(TH+2)*(WPAD) + 1 * WPAD + tw_id * TW + 7]*data_array[5];
+		temp_result[6] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 0]*data_array[3];
+		temp_result[0] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 0]*data_array[6];
+		temp_result[7] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 1]*data_array[3];
+		temp_result[6] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 1]*data_array[4];
+		temp_result[1] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 1]*data_array[6];
+		temp_result[0] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 1]*data_array[7];
+		temp_result[8] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 2]*data_array[3];
+		temp_result[7] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 2]*data_array[4];
+		temp_result[6] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 2]*data_array[5];
+		temp_result[2] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 2]*data_array[6];
+		temp_result[1] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 2]*data_array[7];
+		temp_result[0] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 2]*data_array[8];
+		temp_result[9] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 3]*data_array[3];
+		temp_result[8] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 3]*data_array[4];
+		temp_result[7] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 3]*data_array[5];
+		temp_result[3] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 3]*data_array[6];
+		temp_result[2] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 3]*data_array[7];
+		temp_result[1] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 3]*data_array[8];
+		temp_result[10] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 4]*data_array[3];
+		temp_result[9] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 4]*data_array[4];
+		temp_result[8] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 4]*data_array[5];
+		temp_result[4] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 4]*data_array[6];
+		temp_result[3] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 4]*data_array[7];
+		temp_result[2] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 4]*data_array[8];
+		temp_result[11] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 5]*data_array[3];
+		temp_result[10] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 5]*data_array[4];
+		temp_result[9] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 5]*data_array[5];
+		temp_result[5] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 5]*data_array[6];
+		temp_result[4] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 5]*data_array[7];
+		temp_result[3] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 5]*data_array[8];
+		temp_result[11] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 6]*data_array[4];
+		temp_result[10] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 6]*data_array[5];
+		temp_result[5] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 6]*data_array[7];
+		temp_result[4] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 6]*data_array[8];
+		temp_result[11] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 7]*data_array[5];
+		temp_result[5] += shared_input[c*(TH+2)*(WPAD) + 2 * WPAD + tw_id * TW + 7]*data_array[8];
+		temp_result[6] += shared_input[c*(TH+2)*(WPAD) + 3 * WPAD + tw_id * TW + 0]*data_array[6];
+		temp_result[7] += shared_input[c*(TH+2)*(WPAD) + 3 * WPAD + tw_id * TW + 1]*data_array[6];
+		temp_result[6] += shared_input[c*(TH+2)*(WPAD) + 3 * WPAD + tw_id * TW + 1]*data_array[7];
+		temp_result[8] += shared_input[c*(TH+2)*(WPAD) + 3 * WPAD + tw_id * TW + 2]*data_array[6];
+		temp_result[7] += shared_input[c*(TH+2)*(WPAD) + 3 * WPAD + tw_id * TW + 2]*data_array[7];
+		temp_result[6] += shared_input[c*(TH+2)*(WPAD) + 3 * WPAD + tw_id * TW + 2]*data_array[8];
+		temp_result[9] += shared_input[c*(TH+2)*(WPAD) + 3 * WPAD + tw_id * TW + 3]*data_array[6];
+		temp_result[8] += shared_input[c*(TH+2)*(WPAD) + 3 * WPAD + tw_id * TW + 3]*data_array[7];
+		temp_result[7] += shared_input[c*(TH+2)*(WPAD) + 3 * WPAD + tw_id * TW + 3]*data_array[8];
+		temp_result[10] += shared_input[c*(TH+2)*(WPAD) + 3 * WPAD + tw_id * TW + 4]*data_array[6];
+		temp_result[9] += shared_input[c*(TH+2)*(WPAD) + 3 * WPAD + tw_id * TW + 4]*data_array[7];
+		temp_result[8] += shared_input[c*(TH+2)*(WPAD) + 3 * WPAD + tw_id * TW + 4]*data_array[8];
+		temp_result[11] += shared_input[c*(TH+2)*(WPAD) + 3 * WPAD + tw_id * TW + 5]*data_array[6];
+		temp_result[10] += shared_input[c*(TH+2)*(WPAD) + 3 * WPAD + tw_id * TW + 5]*data_array[7];
+		temp_result[9] += shared_input[c*(TH+2)*(WPAD) + 3 * WPAD + tw_id * TW + 5]*data_array[8];
+		temp_result[11] += shared_input[c*(TH+2)*(WPAD) + 3 * WPAD + tw_id * TW + 6]*data_array[7];
+		temp_result[10] += shared_input[c*(TH+2)*(WPAD) + 3 * WPAD + tw_id * TW + 6]*data_array[8];
+		temp_result[11] += shared_input[c*(TH+2)*(WPAD) + 3 * WPAD + tw_id * TW + 7]*data_array[8];
+
     }
+    switch_write_back(min(TH, H - h_out_start), min(TW, W - w_out_start), h_out_start, w_out_start, n, outputs, temp_result);
 }
+
 float check_diff(float *x, float *y, unsigned int size){
     float diff = 0.0f;
 #pragma omp parallel for reduction(+ : diff)
@@ -1309,7 +1239,7 @@ int main(void){
 
         dim3 grid(1,14,12);
 
-        dim3 block(14,1,4);
+                dim3 block(14,1,4);
 
     cudaEventRecord(event_start);
     default_function_kernel0<<<grid, block>>>(device_input, device_K, device_out);
@@ -1319,13 +1249,11 @@ int main(void){
     cudaEventElapsedTime(&time_tvm, event_start, event_stop);
     float *out_tvm = new float[N*H*W];
     cudaMemcpy(out_tvm,device_out,N*H*W*sizeof(float),cudaMemcpyDeviceToHost);
-
     cudaMemset(device_out, 0, sizeof(float)*N*H*W);
 
-    unsigned int blkDim = ((N - 1)/32 + 1) * 32;
+    chkerr(cudaFuncSetAttribute(conv2d,cudaFuncAttributeMaxDynamicSharedMemorySize, TC*(TH+2)*(WPAD)*4));
     cudaEventRecord(event_start);
-    transform<<<216,1024>>>(device_input,matrix);
-    conv2d<<<TCS*THS*TWS,blkDim>>>(matrix,device_K, device_out);
+    conv2d<<<TCS*THS, N * TWS, TC*(TH+2)*(WPAD)*4>>>(device_input, device_K, device_out);
     cudaEventRecord(event_stop);
     cudaEventSynchronize(event_stop);
     float time_tdc;
@@ -1342,10 +1270,10 @@ int main(void){
     outfile << buffer;
 
 
-
     float difference = check_diff(out_tvm, out_tdc, N*H*W);
     cout<<N<<","<<C<<","<<H<<","<<W<<","<<cudnnFFTTime<<","<<cudnnWinogradeTimeNon<<","<<cudnnGemmTime<<","<<
-                                   time_tvm<<","<<time_tdc<<","<<cudnnFFTTime/time_tdc<<","<<cudnnWinogradeTimeNon/time_tdc<<","<<cudnnGemmTime/time_tdc<<","<<time_tvm/time_tdc<<endl;
+                                   time_tvm<<","<<time_tdc<<","<<cudnnFFTTime/time_tdc<<","<<cudnnWinogradeTimeNon/time_tdc<<","<<
+                                   cudnnGemmTime/time_tdc<<","<<time_tvm/time_tdc<<","<<difference<<endl;
     return 0;
 }
 

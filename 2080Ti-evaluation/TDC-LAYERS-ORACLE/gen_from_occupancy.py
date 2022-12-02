@@ -64,10 +64,57 @@ def query_best(c,n,h,w, occupancy_file):
             t = run_time
             idx = index
     return target_lines[idx]
+def auto_unroll(H, W):
+    out_put = ''
+    R = 3
+    S = 3
+    Ho = H - 2
+    Wo = W - 2
+    for h in range(H):
+        for w in range(W):
+            v = 'shared_input[c*(TH+2)*(WPAD) + {} * WPAD + tw_id * TW + {}]'.format(h, w)
+            r_end = R
+            s_end = S
+            r_start_condition = (h - Ho + 1)
+            r_end_condition = (h+1)
+            s_start_condition = (w - Wo + 1)
+            s_end_condition = (w+1)
+            r_end = min(r_end,r_end_condition)
+            r_start = max(0,r_start_condition)
+            s_end = min(s_end,s_end_condition)
+            s_start = max(0,s_start_condition)
+            for r in range(r_start, r_end):
+                for s in range(s_start, s_end):
+                    write_location = (h - r) *Wo + w - s
+                    #print(h, r, Wo, w, s, write_location)
+                    kernel_location = r * 3 + s
+                    out_put+='\t\ttemp_result[{}] += {}*{};\n'.format(write_location, v, 'data_array[{}]'.format(kernel_location))
+    return out_put
+def build_outter_write(TH, TW):
+    out = '\t\tswitch(write_w){\n'
+    template = '\t\t\tcase {}:\n \t\t\t#pragma unroll\n\t\t\tfor (unsigned int th = 0; th < {}; ++th) {{ \n\t\t\t\t#pragma unroll\n\t\t\t\tfor (unsigned int tw = 0; tw < {}; ++tw) {{ \n\t\t\t\t\tatomicAdd(&outputs[n*H*W+(h_out_start + th) * W+(w_out_start + tw)],temp_result[(th * TW + tw)]);\n\t\t\t\t}}\n\t\t\t}}\n\t\t\tbreak;\n'
+    for tw in range(1, TW+1):
+        out += template.format(tw, TH, tw)
+    out += '\t\t}'
+    return out
+def build_inner_write(TH, TW):
+    header = '__device__ __forceinline__ void switch_write_back(unsigned int write_h, unsigned int write_w, unsigned int h_out_start, unsigned int w_out_start, unsigned int n, float * outputs, float * temp_result){\n'
+    out = '\tswitch(write_h){'
+    template = '\n\t\tcase {}: \n {} \n\t\tbreak;'
+    for th in range(1, TH + 1):
+        out += template.format(th, build_outter_write(th, TW))
+    out += '\n\t}'
+    func_lines = ''
+    func_lines += header
+    func_lines += out
+    func_lines += '\n}'
+    return func_lines
+
 def save_code_2_disk(N,C,H,W,TC,TH,TW):
     func_reader = codecs.open('template_benchmark_cudnn.template','r','utf-8')
-    switch_func_lines = build_switch(TH+2,TW+2)
+    switch_func_lines = auto_unroll(TH+2,TW+2)
     func_lines = func_reader.readlines()
+    switch_write_lines = build_inner_write(TH, TW)
     content = ''
     for line in func_lines:
         content += line
@@ -80,7 +127,8 @@ def save_code_2_disk(N,C,H,W,TC,TH,TW):
     content = content.replace('#define W place holder', '#define W {}'.format(W))
     content = content.replace('#define C place holder', '#define C {}'.format(C))
     content = content.replace('#define N place holder', '#define N {}'.format(N))
-    content = content.replace('switch_function_place_holder', switch_func_lines)
+    content = content.replace('compute_place_holder', switch_func_lines)
+    content = content.replace('switch_write_back_place_holder', switch_write_lines)
     content = content.replace('tvm_source_code_place_holder', tvm_source_code)
     #tvm_grid_place_holder
     #tvm_block_place_holder

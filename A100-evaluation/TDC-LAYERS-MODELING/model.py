@@ -26,20 +26,18 @@ def read_tvm_source(c, n, h, w):
     for i in range(start, end):
         source_code += lines[i]
     return source_code, grid, block
-def build_switch(H,W):
+
+def auto_unroll(H, W):
+    out_put = ''
     R = 3
     S = 3
-    Ho = H - (R-1)
-    Wo = W - (S-1)
-    template = '\t\tcase {}:\n\t\t\t#pragma unroll\n\t\t\tfor ( int r = {}; r < {}; r++) {{\n\t\t\t\t#pragma unroll\n\t\t\t\tfor ( int s = {}; s < {}; s++) {{' \
-               '\n\t\t\t\t\tfloat result = v * temp_kernel[r*S+s];\n\t\t\t\t\ttemp_result[({}-r)*{}+({}-s)] += result;\n\t\t\t\t}}\n\t\t\t}}\n\t\tbreak;\n'
-    line = '__device__ void switch_function( unsigned int switch_condition,float *temp_kernel,float v,float *temp_result){\n' \
-           '\tswitch (switch_condition) {\n'
+    Ho = H - 2
+    Wo = W - 2
     for h in range(H):
         for w in range(W):
+            v = 'shared_input[c*(TH+2)*(WPAD) + {} * WPAD + tw_id * TW + {}]'.format(h, w)
             r_end = R
             s_end = S
-            id = h*W+w
             r_start_condition = (h - Ho + 1)
             r_end_condition = (h+1)
             s_start_condition = (w - Wo + 1)
@@ -48,19 +46,43 @@ def build_switch(H,W):
             r_start = max(0,r_start_condition)
             s_end = min(s_end,s_end_condition)
             s_start = max(0,s_start_condition)
-            case_line = template.format(id,r_start,r_end,s_start,s_end,h,(Wo),w)
-            line +=case_line
-    line += '\n\t}'
-    line += '\n}'
-    return line
+            for r in range(r_start, r_end):
+                for s in range(s_start, s_end):
+                    write_location = (h - r) *Wo + w - s
+                    #print(h, r, Wo, w, s, write_location)
+                    kernel_location = r * 3 + s
+                    out_put+='\t\ttemp_result[{}] += {}*{};\n'.format(write_location, v, 'data_array[{}]'.format(kernel_location))
+    return out_put
+def build_outter_write(TH, TW):
+    out = '\t\tswitch(write_w){\n'
+    template = '\t\t\tcase {}:\n \t\t\t#pragma unroll\n\t\t\tfor (unsigned int th = 0; th < {}; ++th) {{ \n\t\t\t\t#pragma unroll\n\t\t\t\tfor (unsigned int tw = 0; tw < {}; ++tw) {{ \n\t\t\t\t\tatomicAdd(&outputs[n*H*W+(h_out_start + th) * W+(w_out_start + tw)],temp_result[(th * TW + tw)]);\n\t\t\t\t}}\n\t\t\t}}\n\t\t\tbreak;\n'
+    for tw in range(1, TW+1):
+        out += template.format(tw, TH, tw)
+    out += '\t\t}'
+    return out
+def build_inner_write(TH, TW):
+    header = '__device__ __forceinline__ void switch_write_back(unsigned int write_h, unsigned int write_w, unsigned int h_out_start, unsigned int w_out_start, unsigned int n, float * outputs, float * temp_result){\n'
+    out = '\tswitch(write_h){'
+    template = '\n\t\tcase {}: \n {} \n\t\tbreak;'
+    for th in range(1, TH + 1):
+        out += template.format(th, build_outter_write(th, TW))
+    out += '\n\t}'
+    func_lines = ''
+    func_lines += header
+    func_lines += out
+    func_lines += '\n}'
+    return func_lines
+
 def save_code_2_disk(N,C,H,W,TC,TH,TW):
     func_reader = codecs.open('template_benchmark_cudnn.template','r','utf-8')
-    switch_func_lines = build_switch(TH+2,TW+2)
+    switch_func_lines = auto_unroll(TH+2,TW+2)
     func_lines = func_reader.readlines()
+    switch_write_lines = build_inner_write(TH, TW)
     content = ''
-    tvm_source_code, tvm_grid, tvm_block = read_tvm_source(C, N, H, W)
     for line in func_lines:
         content += line
+    tvm_source_code, tvm_grid, tvm_block = read_tvm_source(C, N, H, W)
+
     content = content.replace('#define TH place holder', '#define TH {}'.format(TH))
     content = content.replace('#define TW place holder', '#define TW {}'.format(TW))
     content = content.replace('#define TC place holder', '#define TC {}'.format(TC))
@@ -68,10 +90,11 @@ def save_code_2_disk(N,C,H,W,TC,TH,TW):
     content = content.replace('#define W place holder', '#define W {}'.format(W))
     content = content.replace('#define C place holder', '#define C {}'.format(C))
     content = content.replace('#define N place holder', '#define N {}'.format(N))
-    content = content.replace('switch_function_place_holder', switch_func_lines)
+    content = content.replace('compute_place_holder', switch_func_lines)
+    content = content.replace('switch_write_back_place_holder', switch_write_lines)
     content = content.replace('tvm_source_code_place_holder', tvm_source_code)
-#tvm_grid_place_holder
-#tvm_block_place_holder
+    #tvm_grid_place_holder
+    #tvm_block_place_holder
     content = content.replace('tvm_grid_place_holder', tvm_grid)
     content = content.replace('tvm_block_place_holder', tvm_block)
     writter = codecs.open('{}_{}_{}_{}.cu'.format(C,N,H,W),'w','utf-8')
@@ -111,15 +134,16 @@ def get_result_dict(lines):
 
 def compute_latency(C,N,H,W,th,tw,tc,r,s,sms,ths_sm,occupancy_table):
     flops = (th+r-1)*(tw+s-1)*tc*r*s
-    bnum = math.ceil(H/th) * math.ceil(W/tw) * math.ceil(C/tc)
+    bnum = math.ceil(H/th) * math.ceil(C/tc)
+    bdim = math.ceil(W/tw) * N
     K = (C,N,H,W,th,tw,tc)
     api_occup = occupancy_table[K]
-    bnums_one_wave = math.floor((sms*ths_sm*api_occup)/N)
+    bnums_one_wave = math.floor((sms*ths_sm*api_occup)/bdim)
     waves = math.ceil(bnum/bnums_one_wave)
     return flops * waves
 
 def compute_input_vol(C,N,H,W,th,tw,tc):
-    in_vol = math.ceil(H/th) * math.ceil(W/tw) * (th + 3 - 1) * (tw + 3 - 1) * C
+    in_vol = math.ceil(H/th)  * (th + 2) * (W + 2) * C
     return in_vol
 def compute_out_vol(C,N,H,W,th,tw,tc):
     bnum = math.ceil(H/th) * math.ceil(W/tw) * math.ceil(C/tc)
@@ -146,6 +170,8 @@ def build_table(shapes,occupancy_table,num_sm,num_threads):
             for tw in tws:
                 for tc in tcs:
                     if th >= H or tw >= W:
+                        continue
+                    if(C,N,H,W,th,tw,tc) not in occupancy_table.keys():
                         continue
                     K = compute_kernel_vol(C,N,H,W,th,tw,tc)
                     I = compute_input_vol(C,N,H,W,th,tw,tc)
@@ -185,13 +211,15 @@ def modeling(tiling_table, shape, a, b, c, ratio):
     H = shape[2]
     W = shape[3]
     candidates = []
-    ths = [2,3,4,5,6,7]
-    tws = [2,3,4,5,6,7]
-    tcs = [1,2,4,8,16]
+    ths = [1,2,3,4,5,6,7,8,9,10,11,12]
+    tws = [1,2,3,4,5,6,7,8,9,10,11,12]
+    tcs = [1,2,4,8,16,32]
     for th in ths:
         for tw in tws:
             for tc in tcs:
                 if th >= H or tw >= W:
+                    continue
+                if(C,N,H,W,th,tw,tc) not in tiling_table.keys():
                     continue
                 K,I,O,flops = tiling_table[(C,N,H,W,th,tw,tc)]
                 data_vol = K*a + I*b + O*c
