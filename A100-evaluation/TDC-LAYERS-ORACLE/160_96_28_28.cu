@@ -1273,7 +1273,7 @@ int main(void){
     float difference = check_diff(out_tvm, out_tdc, N*H*W);
     cout<<N<<","<<C<<","<<H<<","<<W<<","<<cudnnFFTTime<<","<<cudnnWinogradeTimeNon<<","<<cudnnGemmTime<<","<<
                                    time_tvm<<","<<time_tdc<<","<<cudnnFFTTime/time_tdc<<","<<cudnnWinogradeTimeNon/time_tdc<<","<<
-                                   cudnnGemmTime/time_tdc<<","<<time_tvm/time_tdc<<","<<difference<<endl;
+                                   cudnnGemmTime/time_tdc<<","<<time_tvm/time_tdc<<endl;
     return 0;
 }
 
