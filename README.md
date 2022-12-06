@@ -64,7 +64,7 @@ It will generate three tables.
 
 In our paper, we claim that our oracle kernel has about 4X speedup compared with cuDNN on average and that our oracle kernel has about 2X speedup compared with TVM on average.
 
-You will get the first table like below, including convolution shapes, convolution schemes, runtimes, and TDC speedups.
+You will get the first table like below, including convolution shapes, convolution schemes, runtimes, and TDC speedups. Refer to figure 6.
 
 ![eval2](https://github.com/black-cat-sheriff/TDC-PPOPP/blob/master/images/oracle.png)
  
@@ -78,7 +78,7 @@ You will get the second table like below, including convolution shapes, convolut
 
 ### 2.2.3 End-to-end performance comparison among pure cuDNN on original models, pure cuDNN on TK compressed models, and TK compressed models.
 
-In our paper, we claim that (1) TDC oralce and modeling end2end achieve 1.57X/1.45X ~ 3.41X/3.02X speedup compared with original models with pure cuDNN; (2) TDC oralce and modeling end2end achieve 1.04X/0.96X ~ 2.22X/1.95X speedup compared with TK compressed models with pure cuDNN; and (3) TDC oralce and modeling end2end achieve 1.09X/1.05X ~ 1.51X/1.41X speedup compare with TK compressed models with TVM kernels.
+In our paper, we claim that (1) TDC oralce and modeling end2end achieve 1.57X/1.45X ~ 3.41X/3.02X speedup compared with original models with pure cuDNN; (2) TDC oralce and modeling end2end achieve 1.04X/0.96X ~ 2.22X/1.95X speedup compared with TK compressed models with pure cuDNN; and (3) TDC oralce and modeling end2end achieve 1.09X/1.05X ~ 1.51X/1.41X speedup compare with TK compressed models with TVM kernels. Refer to figure 8.
 
 You will get the third table like below, each model has two rows - the first one is header and the second one is runtime.
 
@@ -94,7 +94,7 @@ It will generate three tables.
 
 ### 2.3.1 Comparison among TDC oracle kernel, cuDNN, and TVM.
 
-In our paper, we claim that our oracle kernel has about 4X speedup compared with cuDNN on average and that our oracle kernel has about 1.7X speedup compared with TVM on average.
+In our paper, we claim that our oracle kernel has about 4X speedup compared with cuDNN on average and that our oracle kernel has about 1.7X speedup compared with TVM on average. Refer to figure 5.
 
 You will observe the first table like below, including convolution shapes, convolution schemes, runtimes, and TDC speedups.
 
@@ -110,7 +110,7 @@ You will get the second table like below, including convolution shapes, convolut
   
 ### 2.3.3 End-to-end performance comparison among pure cuDNN on original models, pure cuDNN on TK compressed models, and TK compressed models.
 
-In our paper, we claim that (1) TDC oralce and modeling end2end achieve 1.85X/1.71X ~ 4.57X/4.12X speedup compared with original models with pure cuDNN; (2) TDC oralce and modeling end2end achieve 1.27X/1.10X ~ 3.14X/2.86X speedup compare with TK compressed models with pure cuDNN; and (3) TDC oralce and modeling end2end achieve 1.08X/0.96X ~ 1.45X/1.29X speedup compare with TK compressed models with TVM kernels.
+In our paper, we claim that (1) TDC oralce and modeling end2end achieve 1.85X/1.71X ~ 4.57X/4.12X speedup compared with original models with pure cuDNN; (2) TDC oralce and modeling end2end achieve 1.27X/1.10X ~ 3.14X/2.86X speedup compare with TK compressed models with pure cuDNN; and (3) TDC oralce and modeling end2end achieve 1.08X/0.96X ~ 1.45X/1.29X speedup compare with TK compressed models with TVM kernels. Refer to figure 7.
    
 You will get the third table like below, each model has two rows - the first one is header and the second one is runtime.
 
