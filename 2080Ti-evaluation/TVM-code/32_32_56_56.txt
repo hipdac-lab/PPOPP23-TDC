@@ -1,0 +1,120 @@
+ConfigSpace (len=406425600, space_map=
+   0 tile_f: Split(policy=factors, product=32, num_outputs=4) len=56
+   1 tile_y: Split(policy=factors, product=56, num_outputs=4) len=80
+   2 tile_x: Split(policy=factors, product=56, num_outputs=4) len=80
+   3 tile_rc: Split(policy=factors, product=32, num_outputs=3) len=21
+   4 tile_ry: Split(policy=factors, product=3, num_outputs=3) len=3
+   5 tile_rx: Split(policy=factors, product=3, num_outputs=3) len=3
+   6 auto_unroll_max_step: OtherOption([0, 512, 1500]) len=3
+   7 unroll_explicit: OtherOption([0, 1]) len=2
+)
+Finish loading 150 records
+
+Best config:
+[('tile_f', [-1, 1, 16, 2]), ('tile_y', [-1, 1, 1, 2]), ('tile_x', [-1, 1, 14, 2]), ('tile_rc', [-1, 1, 8]), ('tile_ry', [-1, 1, 1]), ('tile_rx', [-1, 1, 3]), ('auto_unroll_max_step', 512), ('unroll_explicit', 0)],None,118475315
+Finish loading 150 records
+/home/lizhi/tvm-python/tvm/python/tvm/target/target.py:454: UserWarning: tvm.target.create() is being deprecated. Please use tvm.target.Target() instead
+  warnings.warn("tvm.target.create() is being deprecated. Please use tvm.target.Target() instead")
+Dump
+
+
+******6*******
+
+extern "C" __global__ void default_function_kernel0(float* __restrict__ data, float* __restrict__ kernel, float* __restrict__ compute) {
+  float compute_local[8];
+  __shared__ float pad_temp_shared[896];
+  __shared__ float kernel_shared[768];
+  float pad_temp_shared_local[64];
+  float kernel_shared_local[48];
+  #pragma unroll
+  for (int ff_c_init = 0; ff_c_init < 2; ++ff_c_init) {
+    #pragma unroll
+    for (int yy_c_init = 0; yy_c_init < 2; ++yy_c_init) {
+      #pragma unroll
+      for (int xx_c_init = 0; xx_c_init < 2; ++xx_c_init) {
+        compute_local[((((ff_c_init * 4) + (yy_c_init * 2)) + xx_c_init))] = 0.000000e+00f;
+      }
+    }
+  }
+  for (int rc_outer = 0; rc_outer < 4; ++rc_outer) {
+    for (int rx_outer = 0; rx_outer < 3; ++rx_outer) {
+      __syncthreads();
+      #pragma unroll
+      for (int ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner = 0; ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner < 4; ++ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner) {
+        pad_temp_shared[((((((int)threadIdx.z) * 56) + (((int)threadIdx.x) * 4)) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner))] = (((((1 <= ((((int)blockIdx.y) * 2) + (((((int)threadIdx.z) * 2) + (((((int)threadIdx.x) * 4) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner) / 28)) & 3))) && (((((int)blockIdx.y) * 2) + (((((int)threadIdx.z) * 2) + (((((int)threadIdx.x) * 4) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner) / 28)) & 3)) < 57)) && (1 <= (((((int)blockIdx.x) * 28) + rx_outer) + (((((int)threadIdx.x) * 4) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner) % 28)))) && ((((((int)blockIdx.x) * 28) + rx_outer) + (((((int)threadIdx.x) * 4) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner) % 28)) < 57)) ? data[(((((((((rc_outer * 25088) + ((((((int)threadIdx.z) * 2) + (((((int)threadIdx.x) * 4) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner) / 28)) >> 2) * 3136)) + (((int)blockIdx.y) * 112)) + ((((((int)threadIdx.z) * 2) + (((((int)threadIdx.x) * 4) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner) / 28)) & 3) * 56)) + (((int)blockIdx.x) * 28)) + rx_outer) + (((((int)threadIdx.x) * 4) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner) % 28)) - 57))] : 0.000000e+00f);
+      }
+      #pragma unroll
+      for (int ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner1 = 0; ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner1 < 4; ++ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner1) {
+        if (((((int)threadIdx.z) * 2) + (((((int)threadIdx.x) * 4) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner1) / 24)) < 32) {
+          if (((((int)threadIdx.z) * 16) + (((((int)threadIdx.x) * 4) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner1) / 3)) < 256) {
+            if ((((((int)threadIdx.z) * 48) + (((int)threadIdx.x) * 4)) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner1) < 768) {
+              if (((((int)threadIdx.x) * 4) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner1) < 48) {
+                kernel_shared[((((((int)threadIdx.z) * 48) + (((int)threadIdx.x) * 4)) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner1))] = kernel[((((((((int)threadIdx.z) * 576) + ((((((int)threadIdx.x) * 4) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner1) / 24) * 288)) + (rc_outer * 72)) + ((((((int)threadIdx.x) * 4) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner1) % 24) * 3)) + rx_outer))];
+              }
+            }
+          }
+        }
+      }
+      __syncthreads();
+      #pragma unroll
+      for (int ax1 = 0; ax1 < 8; ++ax1) {
+        #pragma unroll
+        for (int ax2 = 0; ax2 < 4; ++ax2) {
+          #pragma unroll
+          for (int ax3 = 0; ax3 < 2; ++ax3) {
+            pad_temp_shared_local[((((ax1 * 8) + (ax2 * 2)) + ax3))] = pad_temp_shared[(((((ax1 * 112) + (ax2 * 28)) + (((int)threadIdx.x) * 2)) + ax3))];
+          }
+        }
+      }
+      #pragma unroll
+      for (int ax0 = 0; ax0 < 2; ++ax0) {
+        #pragma unroll
+        for (int ax11 = 0; ax11 < 8; ++ax11) {
+          #pragma unroll
+          for (int ax21 = 0; ax21 < 3; ++ax21) {
+            kernel_shared_local[((((ax0 * 24) + (ax11 * 3)) + ax21))] = kernel_shared[(((((((int)threadIdx.z) * 48) + (ax0 * 24)) + (ax11 * 3)) + ax21))];
+          }
+        }
+      }
+      #pragma unroll
+      for (int rc_inner_inner = 0; rc_inner_inner < 8; ++rc_inner_inner) {
+        #pragma unroll
+        for (int ry_inner_inner = 0; ry_inner_inner < 3; ++ry_inner_inner) {
+          #pragma unroll
+          for (int ff_c = 0; ff_c < 2; ++ff_c) {
+            #pragma unroll
+            for (int yy_c = 0; yy_c < 2; ++yy_c) {
+              #pragma unroll
+              for (int xx_c = 0; xx_c < 2; ++xx_c) {
+                compute_local[((((ff_c * 4) + (yy_c * 2)) + xx_c))] = (compute_local[((((ff_c * 4) + (yy_c * 2)) + xx_c))] + (pad_temp_shared_local[(((((rc_inner_inner * 8) + (yy_c * 2)) + (ry_inner_inner * 2)) + xx_c))] * kernel_shared_local[((((ff_c * 24) + (rc_inner_inner * 3)) + ry_inner_inner))]));
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  #pragma unroll
+  for (int ff_inner_inner_inner = 0; ff_inner_inner_inner < 2; ++ff_inner_inner_inner) {
+    #pragma unroll
+    for (int yy_inner_inner_inner = 0; yy_inner_inner_inner < 2; ++yy_inner_inner_inner) {
+      #pragma unroll
+      for (int xx_inner_inner_inner = 0; xx_inner_inner_inner < 2; ++xx_inner_inner_inner) {
+        compute[((((((((((int)threadIdx.z) * 6272) + (ff_inner_inner_inner * 3136)) + (((int)blockIdx.y) * 112)) + (yy_inner_inner_inner * 56)) + (((int)blockIdx.x) * 28)) + (((int)threadIdx.x) * 2)) + xx_inner_inner_inner))] = compute_local[((((ff_inner_inner_inner * 4) + (yy_inner_inner_inner * 2)) + xx_inner_inner_inner))];
+      }
+    }
+  }
+}
+
+
+
+******6*******
+
+Time cost of this operator: 0.000033
+cnm
+[src/runtime/cuda/cuda_module.cc] 
+ grid=(2,28,1),  block=(14,1,16)
+[src/runtime/cuda/cuda_module.cc] 
+ grid=(2,28,1),  block=(14,1,16)
+[src/runtime/cuda/cuda_module.cc] 
+ grid=(2,28,1),  block=(14,1,16)

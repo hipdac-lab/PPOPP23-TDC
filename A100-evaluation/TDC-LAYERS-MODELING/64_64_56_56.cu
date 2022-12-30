@@ -46,46 +46,106 @@ inline void chkerr(cudaError_t code)
     }
 }
 extern "C" __global__ void default_function_kernel0(float* __restrict__ data, float* __restrict__ kernel, float* __restrict__ compute) {
-  float compute_local[16];
-  __shared__ float pad_temp_shared[2784];
-  __shared__ float kernel_shared[1152];
-  float pad_temp_shared_local[32];
-  float kernel_shared_local[32];
-  #pragma unroll
-  for (int ff_c_init = 0; ff_c_init < 2; ++ff_c_init) {
-    compute_local[(ff_c_init)] = 0.000000e+00f;
-    compute_local[((ff_c_init + 8))] = 0.000000e+00f;
-    compute_local[((ff_c_init + 2))] = 0.000000e+00f;
-    compute_local[((ff_c_init + 10))] = 0.000000e+00f;
-    compute_local[((ff_c_init + 4))] = 0.000000e+00f;
-    compute_local[((ff_c_init + 12))] = 0.000000e+00f;
-    compute_local[((ff_c_init + 6))] = 0.000000e+00f;
-    compute_local[((ff_c_init + 14))] = 0.000000e+00f;
-  }
+  float compute_local[4];
+  __shared__ float pad_temp_shared[768];
+  __shared__ float kernel_shared[576];
+  float pad_temp_shared_local[16];
+  float kernel_shared_local[24];
+  compute_local[(0)] = 0.000000e+00f;
+  compute_local[(1)] = 0.000000e+00f;
+  compute_local[(2)] = 0.000000e+00f;
+  compute_local[(3)] = 0.000000e+00f;
   for (int rc_outer = 0; rc_outer < 8; ++rc_outer) {
     __syncthreads();
-    #pragma unroll
-    for (int ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner = 0; ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner < 13; ++ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner) {
-      if (((((int)threadIdx.z) * 2) + (((((int)threadIdx.y) * 13) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner) / 348)) < 8) {
-        if (((((int)threadIdx.z) * 116) + (((((int)threadIdx.y) * 13) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner) / 6)) < 464) {
-          if ((((((int)threadIdx.z) * 696) + (((int)threadIdx.y) * 13)) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner) < 2784) {
-            if (((((int)threadIdx.y) * 13) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner) < 696) {
-              pad_temp_shared[((((((int)threadIdx.z) * 696) + (((int)threadIdx.y) * 13)) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner))] = (((((6 <= (((((int)threadIdx.y) * 13) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner) % 348)) && ((((((int)threadIdx.y) * 13) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner) % 348) < 342)) && (1 <= ((((int)blockIdx.x) * 4) + (((((int)threadIdx.y) * 13) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner) % 6)))) && (((((int)blockIdx.x) * 4) + (((((int)threadIdx.y) * 13) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner) % 6)) < 57)) ? data[((((((((rc_outer * 25088) + (((int)threadIdx.z) * 6272)) + ((((((int)threadIdx.y) * 13) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner) / 348) * 3136)) + (((((((int)threadIdx.y) * 13) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner) % 348) / 6) * 56)) + (((int)blockIdx.x) * 4)) + (((((int)threadIdx.y) * 13) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner) % 6)) - 57))] : 0.000000e+00f);
+    pad_temp_shared[((((((int)threadIdx.z) * 192) + (((int)threadIdx.y) * 48)) + (((int)threadIdx.x) * 7)))] = (((((1 <= ((((int)blockIdx.y) * 4) + (((((int)threadIdx.y) * 3) + ((((int)threadIdx.x) * 7) >> 4)) % 6))) && (((((int)blockIdx.y) * 4) + (((((int)threadIdx.y) * 3) + ((((int)threadIdx.x) * 7) >> 4)) % 6)) < 57)) && (1 <= ((((int)blockIdx.x) * 14) + ((((int)threadIdx.x) * 7) & 15)))) && (((((int)blockIdx.x) * 14) + ((((int)threadIdx.x) * 7) & 15)) < 57)) ? data[(((((((((rc_outer * 25088) + (((int)threadIdx.z) * 6272)) + ((((((int)threadIdx.y) * 3) + ((((int)threadIdx.x) * 7) >> 4)) / 6) * 3136)) + (((int)blockIdx.y) * 224)) + ((((((int)threadIdx.y) * 3) + ((((int)threadIdx.x) * 7) >> 4)) % 6) * 56)) + (((int)blockIdx.x) * 14)) + ((((int)threadIdx.x) * 7) & 15)) - 57))] : 0.000000e+00f);
+    pad_temp_shared[(((((((int)threadIdx.z) * 192) + (((int)threadIdx.y) * 48)) + (((int)threadIdx.x) * 7)) + 1))] = (((((1 <= ((((int)blockIdx.y) * 4) + (((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 1) >> 4)) % 6))) && (((((int)blockIdx.y) * 4) + (((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 1) >> 4)) % 6)) < 57)) && (1 <= ((((int)blockIdx.x) * 14) + (((((int)threadIdx.x) * 7) + 1) & 15)))) && (((((int)blockIdx.x) * 14) + (((((int)threadIdx.x) * 7) + 1) & 15)) < 57)) ? data[(((((((((rc_outer * 25088) + (((int)threadIdx.z) * 6272)) + ((((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 1) >> 4)) / 6) * 3136)) + (((int)blockIdx.y) * 224)) + ((((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 1) >> 4)) % 6) * 56)) + (((int)blockIdx.x) * 14)) + (((((int)threadIdx.x) * 7) + 1) & 15)) - 57))] : 0.000000e+00f);
+    pad_temp_shared[(((((((int)threadIdx.z) * 192) + (((int)threadIdx.y) * 48)) + (((int)threadIdx.x) * 7)) + 2))] = (((((1 <= ((((int)blockIdx.y) * 4) + (((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 2) >> 4)) % 6))) && (((((int)blockIdx.y) * 4) + (((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 2) >> 4)) % 6)) < 57)) && (1 <= ((((int)blockIdx.x) * 14) + (((((int)threadIdx.x) * 7) + 2) & 15)))) && (((((int)blockIdx.x) * 14) + (((((int)threadIdx.x) * 7) + 2) & 15)) < 57)) ? data[(((((((((rc_outer * 25088) + (((int)threadIdx.z) * 6272)) + ((((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 2) >> 4)) / 6) * 3136)) + (((int)blockIdx.y) * 224)) + ((((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 2) >> 4)) % 6) * 56)) + (((int)blockIdx.x) * 14)) + (((((int)threadIdx.x) * 7) + 2) & 15)) - 57))] : 0.000000e+00f);
+    pad_temp_shared[(((((((int)threadIdx.z) * 192) + (((int)threadIdx.y) * 48)) + (((int)threadIdx.x) * 7)) + 3))] = (((((1 <= ((((int)blockIdx.y) * 4) + (((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 3) >> 4)) % 6))) && (((((int)blockIdx.y) * 4) + (((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 3) >> 4)) % 6)) < 57)) && (1 <= ((((int)blockIdx.x) * 14) + (((((int)threadIdx.x) * 7) + 3) & 15)))) && (((((int)blockIdx.x) * 14) + (((((int)threadIdx.x) * 7) + 3) & 15)) < 57)) ? data[(((((((((rc_outer * 25088) + (((int)threadIdx.z) * 6272)) + ((((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 3) >> 4)) / 6) * 3136)) + (((int)blockIdx.y) * 224)) + ((((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 3) >> 4)) % 6) * 56)) + (((int)blockIdx.x) * 14)) + (((((int)threadIdx.x) * 7) + 3) & 15)) - 57))] : 0.000000e+00f);
+    pad_temp_shared[(((((((int)threadIdx.z) * 192) + (((int)threadIdx.y) * 48)) + (((int)threadIdx.x) * 7)) + 4))] = (((((1 <= ((((int)blockIdx.y) * 4) + (((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 4) >> 4)) % 6))) && (((((int)blockIdx.y) * 4) + (((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 4) >> 4)) % 6)) < 57)) && (1 <= ((((int)blockIdx.x) * 14) + (((((int)threadIdx.x) * 7) + 4) & 15)))) && (((((int)blockIdx.x) * 14) + (((((int)threadIdx.x) * 7) + 4) & 15)) < 57)) ? data[(((((((((rc_outer * 25088) + (((int)threadIdx.z) * 6272)) + ((((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 4) >> 4)) / 6) * 3136)) + (((int)blockIdx.y) * 224)) + ((((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 4) >> 4)) % 6) * 56)) + (((int)blockIdx.x) * 14)) + (((((int)threadIdx.x) * 7) + 4) & 15)) - 57))] : 0.000000e+00f);
+    pad_temp_shared[(((((((int)threadIdx.z) * 192) + (((int)threadIdx.y) * 48)) + (((int)threadIdx.x) * 7)) + 5))] = (((((1 <= ((((int)blockIdx.y) * 4) + (((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 5) >> 4)) % 6))) && (((((int)blockIdx.y) * 4) + (((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 5) >> 4)) % 6)) < 57)) && (1 <= ((((int)blockIdx.x) * 14) + (((((int)threadIdx.x) * 7) + 5) & 15)))) && (((((int)blockIdx.x) * 14) + (((((int)threadIdx.x) * 7) + 5) & 15)) < 57)) ? data[(((((((((rc_outer * 25088) + (((int)threadIdx.z) * 6272)) + ((((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 5) >> 4)) / 6) * 3136)) + (((int)blockIdx.y) * 224)) + ((((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 5) >> 4)) % 6) * 56)) + (((int)blockIdx.x) * 14)) + (((((int)threadIdx.x) * 7) + 5) & 15)) - 57))] : 0.000000e+00f);
+    if (((((int)threadIdx.z) * 2) + (((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 6) >> 4)) / 6)) < 8) {
+      if ((((((int)threadIdx.z) * 12) + (((int)threadIdx.y) * 3)) + (((((int)threadIdx.x) * 7) + 6) >> 4)) < 48) {
+        if ((((((int)threadIdx.z) * 192) + (((int)threadIdx.y) * 48)) + (((int)threadIdx.x) * 7)) < 762) {
+          if (((((int)threadIdx.y) * 48) + (((int)threadIdx.x) * 7)) < 186) {
+            if (((int)threadIdx.x) < 6) {
+              pad_temp_shared[(((((((int)threadIdx.z) * 192) + (((int)threadIdx.y) * 48)) + (((int)threadIdx.x) * 7)) + 6))] = (((((1 <= ((((int)blockIdx.y) * 4) + (((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 6) >> 4)) % 6))) && (((((int)blockIdx.y) * 4) + (((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 6) >> 4)) % 6)) < 57)) && (1 <= ((((int)blockIdx.x) * 14) + (((((int)threadIdx.x) * 7) + 6) & 15)))) && (((((int)blockIdx.x) * 14) + (((((int)threadIdx.x) * 7) + 6) & 15)) < 57)) ? data[(((((((((rc_outer * 25088) + (((int)threadIdx.z) * 6272)) + ((((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 6) >> 4)) / 6) * 3136)) + (((int)blockIdx.y) * 224)) + ((((((int)threadIdx.y) * 3) + (((((int)threadIdx.x) * 7) + 6) >> 4)) % 6) * 56)) + (((int)blockIdx.x) * 14)) + (((((int)threadIdx.x) * 7) + 6) & 15)) - 57))] : 0.000000e+00f);
             }
           }
         }
       }
     }
-    #pragma unroll
-    for (int ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner1 = 0; ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner1 < 6; ++ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner1) {
-      if (((((int)threadIdx.z) * 4) + (((((int)threadIdx.y) * 2) + (ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner1 / 3)) / 24)) < 16) {
-        if (((((int)threadIdx.z) * 32) + (((((int)threadIdx.y) * 2) + (ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner1 / 3)) / 3)) < 128) {
-          if ((((((int)threadIdx.z) * 96) + (((int)threadIdx.y) * 2)) + (ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner1 / 3)) < 384) {
-            if ((((((int)threadIdx.z) * 288) + (((int)threadIdx.y) * 6)) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner1) < 1152) {
-              if (((((int)threadIdx.y) * 6) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner1) < 288) {
-                if ((((((int)blockIdx.z) * 16) + (((int)threadIdx.z) * 4)) + (((((int)threadIdx.y) * 2) + (ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner1 / 3)) / 24)) < 64) {
-                  kernel_shared[((((((int)threadIdx.z) * 288) + (((int)threadIdx.y) * 6)) + ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner1))] = kernel[(((((((((int)blockIdx.z) * 9216) + (((int)threadIdx.z) * 2304)) + ((((((int)threadIdx.y) * 2) + (ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner1 / 3)) / 24) * 576)) + (rc_outer * 72)) + ((((((int)threadIdx.y) * 2) + (ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner1 / 3)) % 24) * 3)) + (ax0_ax1_fused_ax2_fused_ax3_fused_inner_inner_inner1 % 3)))];
-                }
+    if (((((int)threadIdx.z) * 2) + (((((int)threadIdx.y) * 4) + ((((int)threadIdx.x) * 2) / 3)) >> 3)) < 8) {
+      if ((((((int)threadIdx.z) * 16) + (((int)threadIdx.y) * 4)) + ((((int)threadIdx.x) * 2) / 3)) < 64) {
+        if ((((((int)threadIdx.z) * 48) + (((int)threadIdx.y) * 12)) + (((int)threadIdx.x) * 2)) < 192) {
+          if ((((((int)threadIdx.z) * 144) + (((int)threadIdx.y) * 36)) + (((int)threadIdx.x) * 6)) < 576) {
+            if (((((int)threadIdx.y) * 36) + (((int)threadIdx.x) * 6)) < 144) {
+              if (((int)threadIdx.x) < 6) {
+                kernel_shared[((((((int)threadIdx.z) * 144) + (((int)threadIdx.y) * 36)) + (((int)threadIdx.x) * 6)))] = kernel[(((((((((int)blockIdx.z) * 4608) + (((int)threadIdx.z) * 1152)) + ((((((int)threadIdx.y) * 4) + ((((int)threadIdx.x) * 2) / 3)) >> 3) * 576)) + (rc_outer * 72)) + ((((((int)threadIdx.y) * 4) + ((((int)threadIdx.x) * 2) / 3)) & 7) * 9)) + (((((int)threadIdx.x) * 2) % 3) * 3)))];
+              }
+            }
+          }
+        }
+      }
+    }
+    if (((((int)threadIdx.z) * 2) + (((((int)threadIdx.y) * 4) + ((((int)threadIdx.x) * 2) / 3)) >> 3)) < 8) {
+      if ((((((int)threadIdx.z) * 16) + (((int)threadIdx.y) * 4)) + ((((int)threadIdx.x) * 2) / 3)) < 64) {
+        if ((((((int)threadIdx.z) * 48) + (((int)threadIdx.y) * 12)) + (((int)threadIdx.x) * 2)) < 192) {
+          if ((((((int)threadIdx.z) * 144) + (((int)threadIdx.y) * 36)) + (((int)threadIdx.x) * 6)) < 575) {
+            if (((((int)threadIdx.y) * 36) + (((int)threadIdx.x) * 6)) < 143) {
+              if (((int)threadIdx.x) < 6) {
+                kernel_shared[(((((((int)threadIdx.z) * 144) + (((int)threadIdx.y) * 36)) + (((int)threadIdx.x) * 6)) + 1))] = kernel[((((((((((int)blockIdx.z) * 4608) + (((int)threadIdx.z) * 1152)) + ((((((int)threadIdx.y) * 4) + ((((int)threadIdx.x) * 2) / 3)) >> 3) * 576)) + (rc_outer * 72)) + ((((((int)threadIdx.y) * 4) + ((((int)threadIdx.x) * 2) / 3)) & 7) * 9)) + (((((int)threadIdx.x) * 2) % 3) * 3)) + 1))];
+              }
+            }
+          }
+        }
+      }
+    }
+    if (((((int)threadIdx.z) * 2) + (((((int)threadIdx.y) * 4) + ((((int)threadIdx.x) * 2) / 3)) >> 3)) < 8) {
+      if ((((((int)threadIdx.z) * 16) + (((int)threadIdx.y) * 4)) + ((((int)threadIdx.x) * 2) / 3)) < 64) {
+        if ((((((int)threadIdx.z) * 48) + (((int)threadIdx.y) * 12)) + (((int)threadIdx.x) * 2)) < 192) {
+          if ((((((int)threadIdx.z) * 144) + (((int)threadIdx.y) * 36)) + (((int)threadIdx.x) * 6)) < 574) {
+            if (((((int)threadIdx.y) * 36) + (((int)threadIdx.x) * 6)) < 142) {
+              if (((int)threadIdx.x) < 6) {
+                kernel_shared[(((((((int)threadIdx.z) * 144) + (((int)threadIdx.y) * 36)) + (((int)threadIdx.x) * 6)) + 2))] = kernel[((((((((((int)blockIdx.z) * 4608) + (((int)threadIdx.z) * 1152)) + ((((((int)threadIdx.y) * 4) + ((((int)threadIdx.x) * 2) / 3)) >> 3) * 576)) + (rc_outer * 72)) + ((((((int)threadIdx.y) * 4) + ((((int)threadIdx.x) * 2) / 3)) & 7) * 9)) + (((((int)threadIdx.x) * 2) % 3) * 3)) + 2))];
+              }
+            }
+          }
+        }
+      }
+    }
+    if (((((int)threadIdx.z) * 2) + (((((int)threadIdx.y) * 4) + (((((int)threadIdx.x) * 2) + 1) / 3)) >> 3)) < 8) {
+      if ((((((int)threadIdx.z) * 16) + (((int)threadIdx.y) * 4)) + (((((int)threadIdx.x) * 2) + 1) / 3)) < 64) {
+        if ((((((int)threadIdx.z) * 48) + (((int)threadIdx.y) * 12)) + (((int)threadIdx.x) * 2)) < 191) {
+          if ((((((int)threadIdx.z) * 144) + (((int)threadIdx.y) * 36)) + (((int)threadIdx.x) * 6)) < 573) {
+            if (((((int)threadIdx.y) * 36) + (((int)threadIdx.x) * 6)) < 141) {
+              if (((int)threadIdx.x) < 6) {
+                kernel_shared[(((((((int)threadIdx.z) * 144) + (((int)threadIdx.y) * 36)) + (((int)threadIdx.x) * 6)) + 3))] = kernel[(((((((((int)blockIdx.z) * 4608) + (((int)threadIdx.z) * 1152)) + ((((((int)threadIdx.y) * 4) + (((((int)threadIdx.x) * 2) + 1) / 3)) >> 3) * 576)) + (rc_outer * 72)) + ((((((int)threadIdx.y) * 4) + (((((int)threadIdx.x) * 2) + 1) / 3)) & 7) * 9)) + ((((((int)threadIdx.x) * 2) + 1) % 3) * 3)))];
+              }
+            }
+          }
+        }
+      }
+    }
+    if (((((int)threadIdx.z) * 2) + (((((int)threadIdx.y) * 4) + (((((int)threadIdx.x) * 2) + 1) / 3)) >> 3)) < 8) {
+      if ((((((int)threadIdx.z) * 16) + (((int)threadIdx.y) * 4)) + (((((int)threadIdx.x) * 2) + 1) / 3)) < 64) {
+        if ((((((int)threadIdx.z) * 48) + (((int)threadIdx.y) * 12)) + (((int)threadIdx.x) * 2)) < 191) {
+          if ((((((int)threadIdx.z) * 144) + (((int)threadIdx.y) * 36)) + (((int)threadIdx.x) * 6)) < 572) {
+            if (((((int)threadIdx.y) * 36) + (((int)threadIdx.x) * 6)) < 140) {
+              if (((int)threadIdx.x) < 6) {
+                kernel_shared[(((((((int)threadIdx.z) * 144) + (((int)threadIdx.y) * 36)) + (((int)threadIdx.x) * 6)) + 4))] = kernel[((((((((((int)blockIdx.z) * 4608) + (((int)threadIdx.z) * 1152)) + ((((((int)threadIdx.y) * 4) + (((((int)threadIdx.x) * 2) + 1) / 3)) >> 3) * 576)) + (rc_outer * 72)) + ((((((int)threadIdx.y) * 4) + (((((int)threadIdx.x) * 2) + 1) / 3)) & 7) * 9)) + ((((((int)threadIdx.x) * 2) + 1) % 3) * 3)) + 1))];
+              }
+            }
+          }
+        }
+      }
+    }
+    if (((((int)threadIdx.z) * 2) + (((((int)threadIdx.y) * 4) + (((((int)threadIdx.x) * 2) + 1) / 3)) >> 3)) < 8) {
+      if ((((((int)threadIdx.z) * 16) + (((int)threadIdx.y) * 4)) + (((((int)threadIdx.x) * 2) + 1) / 3)) < 64) {
+        if ((((((int)threadIdx.z) * 48) + (((int)threadIdx.y) * 12)) + (((int)threadIdx.x) * 2)) < 191) {
+          if ((((((int)threadIdx.z) * 144) + (((int)threadIdx.y) * 36)) + (((int)threadIdx.x) * 6)) < 571) {
+            if (((((int)threadIdx.y) * 36) + (((int)threadIdx.x) * 6)) < 139) {
+              if (((int)threadIdx.x) < 6) {
+                kernel_shared[(((((((int)threadIdx.z) * 144) + (((int)threadIdx.y) * 36)) + (((int)threadIdx.x) * 6)) + 5))] = kernel[((((((((((int)blockIdx.z) * 4608) + (((int)threadIdx.z) * 1152)) + ((((((int)threadIdx.y) * 4) + (((((int)threadIdx.x) * 2) + 1) / 3)) >> 3) * 576)) + (rc_outer * 72)) + ((((((int)threadIdx.y) * 4) + (((((int)threadIdx.x) * 2) + 1) / 3)) & 7) * 9)) + ((((((int)threadIdx.x) * 2) + 1) % 3) * 3)) + 2))];
               }
             }
           }
@@ -93,52 +153,277 @@ extern "C" __global__ void default_function_kernel0(float* __restrict__ data, fl
       }
     }
     __syncthreads();
-    for (int ry_inner_outer = 0; ry_inner_outer < 3; ++ry_inner_outer) {
-      #pragma unroll
-      for (int rx_inner_outer = 0; rx_inner_outer < 3; ++rx_inner_outer) {
-        #pragma unroll
-        for (int ax1 = 0; ax1 < 8; ++ax1) {
-          pad_temp_shared_local[(ax1)] = pad_temp_shared[(((((ax1 * 348) + (((int)threadIdx.y) * 6)) + (ry_inner_outer * 6)) + rx_inner_outer))];
-          pad_temp_shared_local[((ax1 + 8))] = pad_temp_shared[((((((ax1 * 348) + (((int)threadIdx.y) * 6)) + (ry_inner_outer * 6)) + rx_inner_outer) + 1))];
-          pad_temp_shared_local[((ax1 + 16))] = pad_temp_shared[((((((ax1 * 348) + (((int)threadIdx.y) * 6)) + (ry_inner_outer * 6)) + rx_inner_outer) + 2))];
-          pad_temp_shared_local[((ax1 + 24))] = pad_temp_shared[((((((ax1 * 348) + (((int)threadIdx.y) * 6)) + (ry_inner_outer * 6)) + rx_inner_outer) + 3))];
-        }
-        #pragma unroll
-        for (int ax0 = 0; ax0 < 2; ++ax0) {
-          #pragma unroll
-          for (int ax11 = 0; ax11 < 8; ++ax11) {
-            kernel_shared_local[(((ax0 * 8) + ax11))] = kernel_shared[((((((((int)threadIdx.z) * 144) + (ax0 * 72)) + (ax11 * 9)) + (ry_inner_outer * 3)) + rx_inner_outer))];
-            kernel_shared_local[((((ax0 * 8) + ax11) + 16))] = kernel_shared[(((((((((int)threadIdx.z) * 144) + (ax0 * 72)) + (ax11 * 9)) + (ry_inner_outer * 3)) + rx_inner_outer) + 576))];
-          }
-        }
-        #pragma unroll
-        for (int rc_inner_inner = 0; rc_inner_inner < 8; ++rc_inner_inner) {
-          #pragma unroll
-          for (int ff_c = 0; ff_c < 2; ++ff_c) {
-            compute_local[(ff_c)] = (compute_local[(ff_c)] + (pad_temp_shared_local[(rc_inner_inner)] * kernel_shared_local[(((ff_c * 8) + rc_inner_inner))]));
-            compute_local[((ff_c + 8))] = (compute_local[((ff_c + 8))] + (pad_temp_shared_local[(rc_inner_inner)] * kernel_shared_local[((((ff_c * 8) + rc_inner_inner) + 16))]));
-            compute_local[((ff_c + 2))] = (compute_local[((ff_c + 2))] + (pad_temp_shared_local[((rc_inner_inner + 8))] * kernel_shared_local[(((ff_c * 8) + rc_inner_inner))]));
-            compute_local[((ff_c + 10))] = (compute_local[((ff_c + 10))] + (pad_temp_shared_local[((rc_inner_inner + 8))] * kernel_shared_local[((((ff_c * 8) + rc_inner_inner) + 16))]));
-            compute_local[((ff_c + 4))] = (compute_local[((ff_c + 4))] + (pad_temp_shared_local[((rc_inner_inner + 16))] * kernel_shared_local[(((ff_c * 8) + rc_inner_inner))]));
-            compute_local[((ff_c + 12))] = (compute_local[((ff_c + 12))] + (pad_temp_shared_local[((rc_inner_inner + 16))] * kernel_shared_local[((((ff_c * 8) + rc_inner_inner) + 16))]));
-            compute_local[((ff_c + 6))] = (compute_local[((ff_c + 6))] + (pad_temp_shared_local[((rc_inner_inner + 24))] * kernel_shared_local[(((ff_c * 8) + rc_inner_inner))]));
-            compute_local[((ff_c + 14))] = (compute_local[((ff_c + 14))] + (pad_temp_shared_local[((rc_inner_inner + 24))] * kernel_shared_local[((((ff_c * 8) + rc_inner_inner) + 16))]));
-          }
-        }
-      }
+    for (int rc_inner_outer = 0; rc_inner_outer < 2; ++rc_inner_outer) {
+      pad_temp_shared_local[(0)] = pad_temp_shared[((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)))];
+      pad_temp_shared_local[(1)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 1))];
+      pad_temp_shared_local[(2)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 2))];
+      pad_temp_shared_local[(3)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 3))];
+      pad_temp_shared_local[(4)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 96))];
+      pad_temp_shared_local[(5)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 97))];
+      pad_temp_shared_local[(6)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 98))];
+      pad_temp_shared_local[(7)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 99))];
+      pad_temp_shared_local[(8)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 192))];
+      pad_temp_shared_local[(9)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 193))];
+      pad_temp_shared_local[(10)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 194))];
+      pad_temp_shared_local[(11)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 195))];
+      pad_temp_shared_local[(12)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 288))];
+      pad_temp_shared_local[(13)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 289))];
+      pad_temp_shared_local[(14)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 290))];
+      pad_temp_shared_local[(15)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 291))];
+      kernel_shared_local[(0)] = kernel_shared[(((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)))];
+      kernel_shared_local[(1)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 1))];
+      kernel_shared_local[(2)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 2))];
+      kernel_shared_local[(3)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 9))];
+      kernel_shared_local[(4)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 10))];
+      kernel_shared_local[(5)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 11))];
+      kernel_shared_local[(6)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 18))];
+      kernel_shared_local[(7)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 19))];
+      kernel_shared_local[(8)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 20))];
+      kernel_shared_local[(9)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 27))];
+      kernel_shared_local[(10)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 28))];
+      kernel_shared_local[(11)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 29))];
+      kernel_shared_local[(12)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 72))];
+      kernel_shared_local[(13)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 73))];
+      kernel_shared_local[(14)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 74))];
+      kernel_shared_local[(15)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 81))];
+      kernel_shared_local[(16)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 82))];
+      kernel_shared_local[(17)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 83))];
+      kernel_shared_local[(18)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 90))];
+      kernel_shared_local[(19)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 91))];
+      kernel_shared_local[(20)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 92))];
+      kernel_shared_local[(21)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 99))];
+      kernel_shared_local[(22)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 100))];
+      kernel_shared_local[(23)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 101))];
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(0)] * kernel_shared_local[(0)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(1)] * kernel_shared_local[(0)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(0)] * kernel_shared_local[(12)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(1)] * kernel_shared_local[(12)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(1)] * kernel_shared_local[(1)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(2)] * kernel_shared_local[(1)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(1)] * kernel_shared_local[(13)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(2)] * kernel_shared_local[(13)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(2)] * kernel_shared_local[(2)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(3)] * kernel_shared_local[(2)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(2)] * kernel_shared_local[(14)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(3)] * kernel_shared_local[(14)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(4)] * kernel_shared_local[(3)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(5)] * kernel_shared_local[(3)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(4)] * kernel_shared_local[(15)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(5)] * kernel_shared_local[(15)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(5)] * kernel_shared_local[(4)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(6)] * kernel_shared_local[(4)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(5)] * kernel_shared_local[(16)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(6)] * kernel_shared_local[(16)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(6)] * kernel_shared_local[(5)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(7)] * kernel_shared_local[(5)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(6)] * kernel_shared_local[(17)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(7)] * kernel_shared_local[(17)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(8)] * kernel_shared_local[(6)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(9)] * kernel_shared_local[(6)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(8)] * kernel_shared_local[(18)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(9)] * kernel_shared_local[(18)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(9)] * kernel_shared_local[(7)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(10)] * kernel_shared_local[(7)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(9)] * kernel_shared_local[(19)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(10)] * kernel_shared_local[(19)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(10)] * kernel_shared_local[(8)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(11)] * kernel_shared_local[(8)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(10)] * kernel_shared_local[(20)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(11)] * kernel_shared_local[(20)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(12)] * kernel_shared_local[(9)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(13)] * kernel_shared_local[(9)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(12)] * kernel_shared_local[(21)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(13)] * kernel_shared_local[(21)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(13)] * kernel_shared_local[(10)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(14)] * kernel_shared_local[(10)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(13)] * kernel_shared_local[(22)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(14)] * kernel_shared_local[(22)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(14)] * kernel_shared_local[(11)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(15)] * kernel_shared_local[(11)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(14)] * kernel_shared_local[(23)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(15)] * kernel_shared_local[(23)]));
+      pad_temp_shared_local[(0)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 16))];
+      pad_temp_shared_local[(1)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 17))];
+      pad_temp_shared_local[(2)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 18))];
+      pad_temp_shared_local[(3)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 19))];
+      pad_temp_shared_local[(4)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 112))];
+      pad_temp_shared_local[(5)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 113))];
+      pad_temp_shared_local[(6)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 114))];
+      pad_temp_shared_local[(7)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 115))];
+      pad_temp_shared_local[(8)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 208))];
+      pad_temp_shared_local[(9)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 209))];
+      pad_temp_shared_local[(10)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 210))];
+      pad_temp_shared_local[(11)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 211))];
+      pad_temp_shared_local[(12)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 304))];
+      pad_temp_shared_local[(13)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 305))];
+      pad_temp_shared_local[(14)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 306))];
+      pad_temp_shared_local[(15)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 307))];
+      kernel_shared_local[(0)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 3))];
+      kernel_shared_local[(1)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 4))];
+      kernel_shared_local[(2)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 5))];
+      kernel_shared_local[(3)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 12))];
+      kernel_shared_local[(4)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 13))];
+      kernel_shared_local[(5)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 14))];
+      kernel_shared_local[(6)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 21))];
+      kernel_shared_local[(7)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 22))];
+      kernel_shared_local[(8)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 23))];
+      kernel_shared_local[(9)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 30))];
+      kernel_shared_local[(10)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 31))];
+      kernel_shared_local[(11)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 32))];
+      kernel_shared_local[(12)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 75))];
+      kernel_shared_local[(13)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 76))];
+      kernel_shared_local[(14)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 77))];
+      kernel_shared_local[(15)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 84))];
+      kernel_shared_local[(16)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 85))];
+      kernel_shared_local[(17)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 86))];
+      kernel_shared_local[(18)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 93))];
+      kernel_shared_local[(19)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 94))];
+      kernel_shared_local[(20)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 95))];
+      kernel_shared_local[(21)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 102))];
+      kernel_shared_local[(22)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 103))];
+      kernel_shared_local[(23)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 104))];
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(0)] * kernel_shared_local[(0)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(1)] * kernel_shared_local[(0)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(0)] * kernel_shared_local[(12)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(1)] * kernel_shared_local[(12)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(1)] * kernel_shared_local[(1)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(2)] * kernel_shared_local[(1)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(1)] * kernel_shared_local[(13)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(2)] * kernel_shared_local[(13)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(2)] * kernel_shared_local[(2)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(3)] * kernel_shared_local[(2)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(2)] * kernel_shared_local[(14)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(3)] * kernel_shared_local[(14)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(4)] * kernel_shared_local[(3)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(5)] * kernel_shared_local[(3)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(4)] * kernel_shared_local[(15)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(5)] * kernel_shared_local[(15)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(5)] * kernel_shared_local[(4)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(6)] * kernel_shared_local[(4)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(5)] * kernel_shared_local[(16)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(6)] * kernel_shared_local[(16)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(6)] * kernel_shared_local[(5)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(7)] * kernel_shared_local[(5)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(6)] * kernel_shared_local[(17)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(7)] * kernel_shared_local[(17)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(8)] * kernel_shared_local[(6)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(9)] * kernel_shared_local[(6)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(8)] * kernel_shared_local[(18)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(9)] * kernel_shared_local[(18)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(9)] * kernel_shared_local[(7)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(10)] * kernel_shared_local[(7)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(9)] * kernel_shared_local[(19)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(10)] * kernel_shared_local[(19)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(10)] * kernel_shared_local[(8)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(11)] * kernel_shared_local[(8)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(10)] * kernel_shared_local[(20)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(11)] * kernel_shared_local[(20)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(12)] * kernel_shared_local[(9)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(13)] * kernel_shared_local[(9)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(12)] * kernel_shared_local[(21)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(13)] * kernel_shared_local[(21)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(13)] * kernel_shared_local[(10)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(14)] * kernel_shared_local[(10)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(13)] * kernel_shared_local[(22)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(14)] * kernel_shared_local[(22)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(14)] * kernel_shared_local[(11)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(15)] * kernel_shared_local[(11)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(14)] * kernel_shared_local[(23)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(15)] * kernel_shared_local[(23)]));
+      pad_temp_shared_local[(0)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 32))];
+      pad_temp_shared_local[(1)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 33))];
+      pad_temp_shared_local[(2)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 34))];
+      pad_temp_shared_local[(3)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 35))];
+      pad_temp_shared_local[(4)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 128))];
+      pad_temp_shared_local[(5)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 129))];
+      pad_temp_shared_local[(6)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 130))];
+      pad_temp_shared_local[(7)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 131))];
+      pad_temp_shared_local[(8)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 224))];
+      pad_temp_shared_local[(9)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 225))];
+      pad_temp_shared_local[(10)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 226))];
+      pad_temp_shared_local[(11)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 227))];
+      pad_temp_shared_local[(12)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 320))];
+      pad_temp_shared_local[(13)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 321))];
+      pad_temp_shared_local[(14)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 322))];
+      pad_temp_shared_local[(15)] = pad_temp_shared[(((((rc_inner_outer * 384) + (((int)threadIdx.y) * 16)) + (((int)threadIdx.x) * 2)) + 323))];
+      kernel_shared_local[(0)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 6))];
+      kernel_shared_local[(1)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 7))];
+      kernel_shared_local[(2)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 8))];
+      kernel_shared_local[(3)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 15))];
+      kernel_shared_local[(4)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 16))];
+      kernel_shared_local[(5)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 17))];
+      kernel_shared_local[(6)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 24))];
+      kernel_shared_local[(7)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 25))];
+      kernel_shared_local[(8)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 26))];
+      kernel_shared_local[(9)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 33))];
+      kernel_shared_local[(10)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 34))];
+      kernel_shared_local[(11)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 35))];
+      kernel_shared_local[(12)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 78))];
+      kernel_shared_local[(13)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 79))];
+      kernel_shared_local[(14)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 80))];
+      kernel_shared_local[(15)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 87))];
+      kernel_shared_local[(16)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 88))];
+      kernel_shared_local[(17)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 89))];
+      kernel_shared_local[(18)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 96))];
+      kernel_shared_local[(19)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 97))];
+      kernel_shared_local[(20)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 98))];
+      kernel_shared_local[(21)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 105))];
+      kernel_shared_local[(22)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 106))];
+      kernel_shared_local[(23)] = kernel_shared[((((((int)threadIdx.z) * 144) + (rc_inner_outer * 36)) + 107))];
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(0)] * kernel_shared_local[(0)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(1)] * kernel_shared_local[(0)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(0)] * kernel_shared_local[(12)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(1)] * kernel_shared_local[(12)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(1)] * kernel_shared_local[(1)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(2)] * kernel_shared_local[(1)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(1)] * kernel_shared_local[(13)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(2)] * kernel_shared_local[(13)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(2)] * kernel_shared_local[(2)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(3)] * kernel_shared_local[(2)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(2)] * kernel_shared_local[(14)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(3)] * kernel_shared_local[(14)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(4)] * kernel_shared_local[(3)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(5)] * kernel_shared_local[(3)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(4)] * kernel_shared_local[(15)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(5)] * kernel_shared_local[(15)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(5)] * kernel_shared_local[(4)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(6)] * kernel_shared_local[(4)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(5)] * kernel_shared_local[(16)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(6)] * kernel_shared_local[(16)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(6)] * kernel_shared_local[(5)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(7)] * kernel_shared_local[(5)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(6)] * kernel_shared_local[(17)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(7)] * kernel_shared_local[(17)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(8)] * kernel_shared_local[(6)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(9)] * kernel_shared_local[(6)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(8)] * kernel_shared_local[(18)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(9)] * kernel_shared_local[(18)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(9)] * kernel_shared_local[(7)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(10)] * kernel_shared_local[(7)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(9)] * kernel_shared_local[(19)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(10)] * kernel_shared_local[(19)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(10)] * kernel_shared_local[(8)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(11)] * kernel_shared_local[(8)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(10)] * kernel_shared_local[(20)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(11)] * kernel_shared_local[(20)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(12)] * kernel_shared_local[(9)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(13)] * kernel_shared_local[(9)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(12)] * kernel_shared_local[(21)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(13)] * kernel_shared_local[(21)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(13)] * kernel_shared_local[(10)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(14)] * kernel_shared_local[(10)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(13)] * kernel_shared_local[(22)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(14)] * kernel_shared_local[(22)]));
+      compute_local[(0)] = (compute_local[(0)] + (pad_temp_shared_local[(14)] * kernel_shared_local[(11)]));
+      compute_local[(1)] = (compute_local[(1)] + (pad_temp_shared_local[(15)] * kernel_shared_local[(11)]));
+      compute_local[(2)] = (compute_local[(2)] + (pad_temp_shared_local[(14)] * kernel_shared_local[(23)]));
+      compute_local[(3)] = (compute_local[(3)] + (pad_temp_shared_local[(15)] * kernel_shared_local[(23)]));
     }
   }
-  #pragma unroll
-  for (int ff_inner_inner_inner = 0; ff_inner_inner_inner < 2; ++ff_inner_inner_inner) {
-    compute[((((((((int)blockIdx.z) * 50176) + (((int)threadIdx.z) * 6272)) + (ff_inner_inner_inner * 3136)) + (((int)threadIdx.y) * 56)) + (((int)blockIdx.x) * 4)))] = compute_local[(ff_inner_inner_inner)];
-    compute[(((((((((int)blockIdx.z) * 50176) + (((int)threadIdx.z) * 6272)) + (ff_inner_inner_inner * 3136)) + (((int)threadIdx.y) * 56)) + (((int)blockIdx.x) * 4)) + 25088))] = compute_local[((ff_inner_inner_inner + 8))];
-    compute[(((((((((int)blockIdx.z) * 50176) + (((int)threadIdx.z) * 6272)) + (ff_inner_inner_inner * 3136)) + (((int)threadIdx.y) * 56)) + (((int)blockIdx.x) * 4)) + 1))] = compute_local[((ff_inner_inner_inner + 2))];
-    compute[(((((((((int)blockIdx.z) * 50176) + (((int)threadIdx.z) * 6272)) + (ff_inner_inner_inner * 3136)) + (((int)threadIdx.y) * 56)) + (((int)blockIdx.x) * 4)) + 25089))] = compute_local[((ff_inner_inner_inner + 10))];
-    compute[(((((((((int)blockIdx.z) * 50176) + (((int)threadIdx.z) * 6272)) + (ff_inner_inner_inner * 3136)) + (((int)threadIdx.y) * 56)) + (((int)blockIdx.x) * 4)) + 2))] = compute_local[((ff_inner_inner_inner + 4))];
-    compute[(((((((((int)blockIdx.z) * 50176) + (((int)threadIdx.z) * 6272)) + (ff_inner_inner_inner * 3136)) + (((int)threadIdx.y) * 56)) + (((int)blockIdx.x) * 4)) + 25090))] = compute_local[((ff_inner_inner_inner + 12))];
-    compute[(((((((((int)blockIdx.z) * 50176) + (((int)threadIdx.z) * 6272)) + (ff_inner_inner_inner * 3136)) + (((int)threadIdx.y) * 56)) + (((int)blockIdx.x) * 4)) + 3))] = compute_local[((ff_inner_inner_inner + 6))];
-    compute[(((((((((int)blockIdx.z) * 50176) + (((int)threadIdx.z) * 6272)) + (ff_inner_inner_inner * 3136)) + (((int)threadIdx.y) * 56)) + (((int)blockIdx.x) * 4)) + 25091))] = compute_local[((ff_inner_inner_inner + 14))];
-  }
+  compute[(((((((((int)blockIdx.z) * 25088) + (((int)threadIdx.z) * 6272)) + (((int)blockIdx.y) * 224)) + (((int)threadIdx.y) * 56)) + (((int)blockIdx.x) * 14)) + (((int)threadIdx.x) * 2)))] = compute_local[(0)];
+  compute[((((((((((int)blockIdx.z) * 25088) + (((int)threadIdx.z) * 6272)) + (((int)blockIdx.y) * 224)) + (((int)threadIdx.y) * 56)) + (((int)blockIdx.x) * 14)) + (((int)threadIdx.x) * 2)) + 1))] = compute_local[(1)];
+  compute[((((((((((int)blockIdx.z) * 25088) + (((int)threadIdx.z) * 6272)) + (((int)blockIdx.y) * 224)) + (((int)threadIdx.y) * 56)) + (((int)blockIdx.x) * 14)) + (((int)threadIdx.x) * 2)) + 3136))] = compute_local[(2)];
+  compute[((((((((((int)blockIdx.z) * 25088) + (((int)threadIdx.z) * 6272)) + (((int)blockIdx.y) * 224)) + (((int)threadIdx.y) * 56)) + (((int)blockIdx.x) * 14)) + (((int)threadIdx.x) * 2)) + 3137))] = compute_local[(3)];
 }
 
 
@@ -654,9 +939,9 @@ int main(void){
     cudaEventElapsedTime(&cudnnFFTTime, event_start, event_stop);
 
 
-        dim3 grid(14,1,4);
+        dim3 grid(4,14,8);
 
-                dim3 block(1,56,4);
+                dim3 block(7,4,4);
 
     cudaEventRecord(event_start);
     default_function_kernel0<<<grid, block>>>(device_input, device_K, device_out);

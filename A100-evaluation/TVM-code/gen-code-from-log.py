@@ -45,7 +45,8 @@ if __name__ == '__main__':
             if '******6*******' in line:
                 end = index
         for line in lines[start:end]:
-            source_code += line
+            if 'tvm' not in line:
+                source_code += line
         template_content = template_content.replace('tvm_code_place_holder', source_code + '\n')
         template_content = template_content.replace('#define C place holder', '#define C {}'.format(c))
         template_content = template_content.replace('#define N place holder', '#define N {}'.format(n))
