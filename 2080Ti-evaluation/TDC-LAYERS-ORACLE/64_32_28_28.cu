@@ -276,7 +276,7 @@ void ConvWinogradeNon::initialize(){
                                             convKernelDescriptor,
                                             convDesc,
                                             convOutputDescriptor,
-                                            CUDNN_CONVOLUTION_FWD_ALGO_WINOGRAD_NONFUSED,
+                                            CUDNN_CONVOLUTION_FWD_ALGO_WINOGRAD,
                                             &workspace_bytes);
     cudaMalloc(&d_workspace, workspace_bytes);
     unsigned int kernelSize = R*S*C*N;//kernel
@@ -296,7 +296,7 @@ float * ConvWinogradeNon::forward(float *input) {
                                        convKernelDescriptor,
                                        kernel,
                                        convDesc,
-                                       CUDNN_CONVOLUTION_FWD_ALGO_WINOGRAD_NONFUSED,
+                                       CUDNN_CONVOLUTION_FWD_ALGO_WINOGRAD,
                                        d_workspace,
                                        workspace_bytes,
                                        &beta,
@@ -672,7 +672,7 @@ int main(void){
     float difference = check_diff(out_cudnn_host, out_tdc, N*H*W);
     cout<<N<<","<<C<<","<<H<<","<<W<<","<<cudnnFFTTime<<","<<cudnnWinogradeTimeNon<<","<<cudnnGemmTime<<","<<
                                    time_tvm<<","<<time_tdc<<","<<cudnnFFTTime/time_tdc<<","<<
-                                   cudnnWinogradeTimeNon/time_tdc<<","<<cudnnGemmTime/time_tdc<<","<<time_tvm/time_tdc<<endl;
+                                   cudnnWinogradeTimeNon/time_tdc<<","<<cudnnGemmTime/time_tdc<<","<<time_tvm/time_tdc<<","<<difference<<endl;
     return 0;
 }
 
