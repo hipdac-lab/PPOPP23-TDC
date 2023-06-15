@@ -159,4 +159,4 @@ series = {PPoPP '23}
 ```
 
 ## Acknowlegement
-Results presented in this paper were obtained using the Chameleon testbed supported by the National Science Foundation.
+The artifact evaluation process was conducted using the Chameleon testbed supported by the National Science Foundation.
