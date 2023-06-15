@@ -2,7 +2,7 @@
 
 ## Download Artifacts
 ```
-git clone https://github.com/black-cat-sheriff/TDC-PPOPP/
+git clone https://github.com/black-cat-sheriff/TDC-PPOPP
 ```
 
 ## Package Requirements
@@ -135,3 +135,28 @@ You will get the third table like below, each model has two rows - the first one
 
 ## External Links
 * TVM (https://tvm.apache.org/)
+
+## Citing TDC
+**PPoPP '23: TDC** ([https://dl.acm.org/doi/10.1145/3588195.3592994](https://dl.acm.org/doi/abs/10.1145/3572848.3577478))
+
+```bibtex
+@inproceedings{10.1145/3572848.3577478,
+author = {Xiang, Lizhi and Yin, Miao and Zhang, Chengming and Sukumaran-Rajam, Aravind and Sadayappan, P. and Yuan, Bo and Tao, Dingwen},
+title = {TDC: Towards Extremely Efficient CNNs on GPUs via Hardware-Aware Tucker Decomposition},
+year = {2023},
+isbn = {9798400700156},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3572848.3577478},
+doi = {10.1145/3572848.3577478},
+booktitle = {Proceedings of the 28th ACM SIGPLAN Annual Symposium on Principles and Practice of Parallel Programming},
+pages = {260–273},
+numpages = {14},
+keywords = {inference, model compression, convolutional neural network, performance, GPU},
+location = {Montreal, QC, Canada},
+series = {PPoPP '23}
+}
+```
+
+## Acknowlegement
+Results presented in this paper were obtained using the Chameleon testbed supported by the National Science Foundation.
